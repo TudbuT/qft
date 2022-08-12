@@ -173,14 +173,6 @@ impl SafeReadWrite {
 
         self.socket
     }
-
-    pub fn get_socket(&self) -> &UdpSocket {
-        &self.socket
-    }
-
-    pub fn get_mut_socket(&mut self) -> &mut UdpSocket {
-        &mut self.socket
-    }
 }
 
 fn main() {
