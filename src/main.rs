@@ -194,7 +194,7 @@ fn main() {
 
 fn helper(args: &Vec<String>) {
     let bind_addr = (
-        "127.0.0.1",
+        "0.0.0.0",
         u16::from_str_radix(args[2].as_str(), 10).expect("invalid port: must be integer"),
     );
     let listener = UdpSocket::bind(&bind_addr).expect("unable to create socket");
@@ -210,7 +210,7 @@ fn helper(args: &Vec<String>) {
 }
 
 fn sender(args: &Vec<String>) {
-    let mut bind_addr = ("127.0.0.1", 0);
+    let mut bind_addr = ("0.0.0.0", 0);
     {
         let holepunch = UdpSocket::bind(&bind_addr).expect("unable to create socket");
         let mut buf = [0 as u8; 2];
@@ -225,7 +225,7 @@ fn sender(args: &Vec<String>) {
             .recv(&mut buf)
             .expect("unable to receive from helper");
         // buf should now contain our port.
-        bind_addr = ("127.0.0.1", u16::from_be_bytes(buf));
+        bind_addr = ("0.0.0.0", u16::from_be_bytes(buf));
         println!("Holepunch successful. Running on port {}.", bind_addr.1);
     }
     // we have the needed bind_addr and did the holepunch
@@ -257,7 +257,7 @@ fn sender(args: &Vec<String>) {
 }
 
 fn receiver(args: &Vec<String>) {
-    let connection = UdpSocket::bind(("127.0.0.1", 0)).expect("unable to create receive socket");
+    let connection = UdpSocket::bind(("0.0.0.0", 0)).expect("unable to create receive socket");
     let mut buf: &[u8] = &[0 as u8; 256];
     let mut file = File::create(args.get(3).unwrap_or_else(|| {
         print_args(args);
