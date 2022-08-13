@@ -1,8 +1,11 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::{Error, Read, Write},
     net::*,
-    time::Duration,
+    str::FromStr,
+    thread,
+    time::{Duration, SystemTime},
 };
 
 trait Ordinal {
@@ -197,80 +200,71 @@ fn helper(args: &Vec<String>) {
         "0.0.0.0",
         u16::from_str_radix(args[2].as_str(), 10).expect("invalid port: must be integer"),
     );
+    let mut map: HashMap<[u8; 200], SocketAddr> = HashMap::new();
     let listener = UdpSocket::bind(&bind_addr).expect("unable to create socket");
-    let mut buf = [0 as u8];
+    let mut buf = [0 as u8; 200];
     loop {
-        let (_, addr) = listener.recv_from(&mut buf).expect("read error");
-        // we got a connection
-        if listener.send_to(&addr.port().to_be_bytes(), addr).is_ok() {
-            // success!
-            println!("Helped {}! :D", addr);
+        let (l, addr) = listener.recv_from(&mut buf).expect("read error");
+        if l != 200 {
+            continue;
+        }
+        if map.contains_key(&buf) {
+            let other = map.get(&buf).unwrap();
+            // we got a connection
+            let mut bytes: &[u8] = addr.to_string().bytes().collect::<Vec<u8>>().leak();
+            let mut addr_buf = [0 as u8; 200];
+            for i in 0..bytes.len().min(200) {
+                addr_buf[i] = bytes[i];
+            }
+            bytes = other.to_string().bytes().collect::<Vec<u8>>().leak();
+            let mut other_buf = [0 as u8; 200];
+            for i in 0..bytes.len().min(200) {
+                other_buf[i] = bytes[i];
+            }
+            if listener.send_to(&addr_buf, other).is_ok()
+                && listener.send_to(&other_buf, addr).is_ok()
+            {
+                // success!
+                println!("Helped {} and {}! :D", addr, other);
+            }
+            map.remove(&buf);
+        } else {
+            map.insert(buf, addr);
         }
     }
 }
 
 fn sender(args: &Vec<String>) {
-    let mut bind_addr = ("0.0.0.0", 0);
-    {
-        let holepunch = UdpSocket::bind(&bind_addr).expect("unable to create socket");
-        let mut buf = [0 as u8; 2];
-        holepunch
-            .connect(args.get(2).unwrap_or_else(|| {
-                print_args(args);
-                panic!("unreachable")
-            }))
-            .expect("unable to connect to helper");
-        holepunch.send(&[0]).expect("unable to talk to helper");
-        holepunch
-            .recv(&mut buf)
-            .expect("unable to receive from helper");
-        // buf should now contain our port.
-        bind_addr = ("0.0.0.0", u16::from_be_bytes(buf));
-        println!("Holepunch successful. Running on port {}.", bind_addr.1);
-    }
-    // we have the needed bind_addr and did the holepunch
-    {
-        let connection = UdpSocket::bind(&bind_addr).expect("unable to create send socket");
-        let mut buf = [0 as u8; 256];
-        let mut file = File::open(args.get(3).unwrap_or_else(|| {
-            print_args(args);
-            panic!("unreachable")
-        }))
-        .expect("file not readable");
-        connection
-            .connect(connection.recv_from(&mut buf).expect("connect error").1)
-            .expect("connect error");
+    let connection = holepunch(args);
+    let mut buf = [0 as u8; 256];
+    let mut file = File::open(args.get(4).unwrap_or_else(|| {
+        print_args(args);
+        panic!("unreachable")
+    }))
+    .expect("file not readable");
 
-        let mut sc = SafeReadWrite::new(connection);
-        loop {
-            let read = file.read(&mut buf).expect("file read error");
-            if read == 0 {
-                println!("Transfer done. Thank you!");
-                sc.end();
-                return;
-            }
-
-            sc.write_safe(&buf[..read]).expect("send error");
-            println!("Sent {} bytes", read);
+    let mut sc = SafeReadWrite::new(connection);
+    loop {
+        let read = file.read(&mut buf).expect("file read error");
+        if read == 0 {
+            println!("Transfer done. Thank you!");
+            sc.end();
+            return;
         }
+
+        sc.write_safe(&buf[..read]).expect("send error");
+        println!("Sent {} bytes", read);
     }
 }
 
 fn receiver(args: &Vec<String>) {
-    let connection = UdpSocket::bind(("0.0.0.0", 0)).expect("unable to create receive socket");
+    let connection = holepunch(args);
     let mut buf: &[u8] = &[0 as u8; 256];
-    let mut file = File::create(args.get(3).unwrap_or_else(|| {
+    let mut file = File::create(args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
     }))
     .expect("file not writable");
-    connection
-        .connect(args.get(2).unwrap_or_else(|| {
-            print_args(args);
-            panic!("unreachable")
-        }))
-        .expect("unable to connect");
-    connection.send(&[0]).expect("connect write error");
 
     let mut sc = SafeReadWrite::new(connection);
     loop {
@@ -286,14 +280,76 @@ fn receiver(args: &Vec<String>) {
     }
 }
 
+fn holepunch(args: &Vec<String>) -> UdpSocket {
+    let bind_addr = (Ipv4Addr::from(0 as u32), 0);
+    let holepunch = UdpSocket::bind(&bind_addr).expect("unable to create socket");
+    holepunch
+        .connect(args.get(2).unwrap_or_else(|| {
+            print_args(args);
+            panic!("unreachable")
+        }))
+        .expect("unable to connect to helper");
+    let bytes = args
+        .get(3)
+        .unwrap_or_else(|| {
+            print_args(args);
+            panic!("unreachable")
+        })
+        .as_bytes();
+    let mut buf = [0 as u8; 200];
+    for i in 0..bytes.len().min(200) {
+        buf[i] = bytes[i];
+    }
+    holepunch.send(&buf).expect("unable to talk to helper");
+    holepunch
+        .recv(&mut buf)
+        .expect("unable to receive from helper");
+    // buf should now contain our partner's address data.
+    let mut s = Vec::from(buf);
+    s.retain(|e| *e != 0);
+    let bind_addr = String::from_utf8_lossy(s.as_slice()).to_string();
+    println!(
+        "Holepunching {} (partner) and :{} (you).",
+        bind_addr,
+        holepunch.local_addr().unwrap().port()
+    );
+    holepunch
+        .connect(SocketAddrV4::from_str(bind_addr.as_str()).unwrap())
+        .expect("connection failed");
+    println!("Waiting...");
+    let mut stop = false;
+    while !stop {
+        let m = unix_millis();
+        thread::sleep(Duration::from_millis(500 - (m % 500)));
+        println!("CONNECT {}", unix_millis());
+        holepunch.send(&[0]).expect("connection failed");
+        if holepunch.recv(&mut [0]).is_ok() {
+            stop = true;
+        }
+    }
+    println!(
+        "Holepunch and connection successful. Running with {} (partner) and :{} (you).",
+        bind_addr,
+        holepunch.local_addr().unwrap().port()
+    );
+    return holepunch;
+}
+
 fn print_args(args: &Vec<String>) {
     let f = args.get(0).unwrap();
     println!(
         "No arguments. Needed: \n\
          | {} helper <bind-port>\n\
-         | {} sender <helper-address>:<helper-port> <filename>\n\
-         | {} receiver <sender-address>:<sender-port> <filename>",
+         | {} sender <helper-address>:<helper-port> <phrase> <filename>\n\
+         | {} receiver <helper-address>:<helper-port> <phrase> <filename>",
         f, f, f
     );
     panic!("No arguments");
+}
+
+fn unix_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64
 }
