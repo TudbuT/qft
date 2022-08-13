@@ -30,8 +30,8 @@ impl Ordinal for SafeReadWritePacket {
 
 struct SafeReadWrite {
     socket: UdpSocket,
-    packet_count_out: u8,
-    packet_count_in: u8,
+    packet_count_out: u64,
+    packet_count_in: u64,
 }
 
 impl SafeReadWrite {
@@ -51,7 +51,7 @@ impl SafeReadWrite {
             );
         }
 
-        let id = self.packet_count_out;
+        let id = self.packet_count_out as u8;
         self.packet_count_out += 1;
 
         let mut buf = Vec::from(buf);
@@ -111,18 +111,15 @@ impl SafeReadWrite {
                     if x == 0 {
                         continue;
                     }
-                    if buf[0] <= self.packet_count_in {
+                    if buf[0] <= self.packet_count_in as u8 {
                         self.socket
                             .send(&[buf[0], SafeReadWritePacket::ACK.ordinal() as u8])
                             .expect("send error");
                     }
-                    if buf[0] == self.packet_count_in {
+                    if buf[0] == self.packet_count_in as u8 {
                         try_again = false;
                         self.packet_count_in += 1;
                         r.1 = x - 2;
-                    }
-                    if buf[0] > self.packet_count_in {
-                        panic!("illegal packet id {} > {}", buf[0], self.packet_count_in);
                     }
                     if buf[1] == SafeReadWritePacket::END.ordinal() as u8 {
                         return Ok((vec![], 0));
@@ -138,7 +135,7 @@ impl SafeReadWrite {
     }
 
     pub fn end(mut self) -> UdpSocket {
-        let id = self.packet_count_out;
+        let id = self.packet_count_out as u8;
         self.packet_count_out += 1;
 
         let mut buf = vec![];
@@ -244,16 +241,21 @@ fn sender(args: &Vec<String>) {
     .expect("file not readable");
 
     let mut sc = SafeReadWrite::new(connection);
+    let mut bytes_sent: u64 = 0;
     loop {
         let read = file.read(&mut buf).expect("file read error");
         if read == 0 {
+            println!();
             println!("Transfer done. Thank you!");
             sc.end();
             return;
         }
 
         sc.write_safe(&buf[..read]).expect("send error");
-        println!("Sent {} bytes", read);
+        bytes_sent += read as u64;
+        if bytes_sent % 4096 == 0 {
+            print!("\rSent {} bytes", bytes_sent);
+        }
     }
 }
 
@@ -267,16 +269,21 @@ fn receiver(args: &Vec<String>) {
     .expect("file not writable");
 
     let mut sc = SafeReadWrite::new(connection);
+    let mut bytes_received: u64 = 0;
     loop {
         let (mbuf, len) = sc.read_safe(buf).expect("read error");
         buf = &mbuf.leak()[..len];
         if len == 0 {
+            println!();
             println!("Transfer done. Thank you!");
             return;
         }
 
         file.write(buf).expect("write error");
-        println!("Received {} bytes", len);
+        bytes_received += len as u64;
+        if bytes_received % 4096 == 0 {
+            print!("\rReceived {} bytes", bytes_received);
+        }
     }
 }
 
