@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{Error, Read, Write},
+    io::{Error, Read, Write, stdout},
     net::*,
     str::FromStr,
     thread,
@@ -256,7 +256,10 @@ fn sender(args: &Vec<String>) {
 
         sc.write_safe(&buf[..read]).expect("send error");
         bytes_sent += read as u64;
-        print!("\rSent {} bytes", bytes_sent);
+        if (bytes_sent % (br * 20) as u64) < (br as u64) {
+            print!("\rSent {} bytes", bytes_sent);
+            stdout().flush().unwrap();
+        }
     }
 }
 
@@ -285,7 +288,10 @@ fn receiver(args: &Vec<String>) {
 
         file.write(buf).expect("write error");
         bytes_received += len as u64;
-        print!("\rReceived {} bytes", bytes_received);
+        if (bytes_received % (br * 20) as u64) < (br as u64) {
+            print!("\rReceived {} bytes", bytes_received);
+            stdout().flush().unwrap();
+        }
     }
 }
 
