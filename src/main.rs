@@ -233,7 +233,7 @@ fn helper(args: &Vec<String>) {
 
 fn sender(args: &Vec<String>) {
     let connection = holepunch(args);
-    let mut buf = [0 as u8; 256];
+    let mut buf = [0 as u8; 1024];
     let mut file = File::open(args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
@@ -253,15 +253,13 @@ fn sender(args: &Vec<String>) {
 
         sc.write_safe(&buf[..read]).expect("send error");
         bytes_sent += read as u64;
-        if bytes_sent % 4096 == 0 {
-            print!("\rSent {} bytes", bytes_sent);
-        }
+        print!("\rSent {} bytes", bytes_sent);
     }
 }
 
 fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
-    let mut buf: &[u8] = &[0 as u8; 256];
+    let mut buf: &[u8] = &[0 as u8; 1024];
     let mut file = File::create(args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
@@ -281,9 +279,7 @@ fn receiver(args: &Vec<String>) {
 
         file.write(buf).expect("write error");
         bytes_received += len as u64;
-        if bytes_received % (256 * 20) == 0 {
-            print!("\rReceived {} bytes", bytes_received);
-        }
+        print!("\rReceived {} bytes", bytes_received);
     }
 }
 
