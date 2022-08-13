@@ -326,6 +326,8 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
         .connect(SocketAddrV4::from_str(bind_addr.as_str()).unwrap())
         .expect("connection failed");
     println!("Waiting...");
+    holepunch.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
+    holepunch.set_write_timeout(Some(Duration::from_secs(1))).unwrap();
     let mut stop = false;
     while !stop {
         let m = unix_millis();
