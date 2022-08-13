@@ -233,7 +233,10 @@ fn helper(args: &Vec<String>) {
 
 fn sender(args: &Vec<String>) {
     let connection = holepunch(args);
-    let mut buf = [0 as u8; 1024];
+    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10).expect("This is not a correct number");
+    let mut buf: Vec<u8> = Vec::new();
+    buf.resize(br as usize, 0);
+    let mut buf = buf.leak();
     let mut file = File::open(args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
@@ -259,7 +262,10 @@ fn sender(args: &Vec<String>) {
 
 fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
-    let mut buf: &[u8] = &[0 as u8; 1024];
+    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10).expect("This is not a correct number");
+    let mut buf: Vec<u8> = Vec::new();
+    buf.resize(br as usize, 0);
+    let mut buf: &[u8] = buf.leak();
     let mut file = File::create(args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
@@ -343,8 +349,8 @@ fn print_args(args: &Vec<String>) {
     println!(
         "No arguments. Needed: \n\
          | {} helper <bind-port>\n\
-         | {} sender <helper-address>:<helper-port> <phrase> <filename>\n\
-         | {} receiver <helper-address>:<helper-port> <phrase> <filename>",
+         | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate]\n\
+         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate]",
         f, f, f
     );
     panic!("No arguments");
