@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fs::File,
-    io::{Error, Read, Write, stdout},
+    io::{stdout, Error, Read, Write},
     net::*,
     str::FromStr,
     thread,
@@ -59,10 +59,6 @@ impl SafeReadWrite {
         buf.insert(0, id);
         let buf = buf.as_slice();
 
-        self.socket
-            .set_read_timeout(Some(Duration::from_secs(1)))
-            .expect("cannot set_read_timeout");
-
         let mut resend = true;
         while resend {
             match self.socket.send(buf) {
@@ -108,7 +104,7 @@ impl SafeReadWrite {
         while try_again {
             match self.socket.recv(buf) {
                 Ok(x) => {
-                    if x == 0 {
+                    if x < 2 {
                         continue;
                     }
                     if buf[0] <= self.packet_count_in as u8 {
@@ -125,7 +121,7 @@ impl SafeReadWrite {
                         return Ok((vec![], 0));
                     }
                 }
-                Err(x) => return Err(x),
+                Err(_) => {}
             }
         }
         mbuf.remove(0);
@@ -142,10 +138,6 @@ impl SafeReadWrite {
         buf.insert(0, SafeReadWritePacket::END.ordinal() as u8);
         buf.insert(0, id);
         let buf = buf.as_slice();
-
-        self.socket
-            .set_read_timeout(Some(Duration::from_secs(1)))
-            .expect("cannot set_read_timeout");
 
         let mut resend = true;
         while resend {
@@ -233,7 +225,8 @@ fn helper(args: &Vec<String>) {
 
 fn sender(args: &Vec<String>) {
     let connection = holepunch(args);
-    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10).expect("This is not a correct number");
+    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
+        .expect("This is not a correct number");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf = buf.leak();
@@ -265,7 +258,8 @@ fn sender(args: &Vec<String>) {
 
 fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
-    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10).expect("This is not a correct number");
+    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
+        .expect("This is not a correct number");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf: &[u8] = buf.leak();
@@ -331,16 +325,21 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
     holepunch
         .connect(SocketAddrV4::from_str(bind_addr.as_str()).unwrap())
         .expect("connection failed");
+    holepunch
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    holepunch
+        .set_write_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
     println!("Waiting...");
-    holepunch.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
-    holepunch.set_write_timeout(Some(Duration::from_secs(1))).unwrap();
     let mut stop = false;
     while !stop {
         let m = unix_millis();
         thread::sleep(Duration::from_millis(500 - (m % 500)));
         println!("CONNECT {}", unix_millis());
         holepunch.send(&[0]).expect("connection failed");
-        if holepunch.recv(&mut [0]).is_ok() {
+        let result = holepunch.recv(&mut [0]);
+        if result.is_ok() && result.unwrap() == 1 {
             stop = true;
         }
     }
@@ -358,7 +357,7 @@ fn print_args(args: &Vec<String>) {
         "No arguments. Needed: \n\
          | {} helper <bind-port>\n\
          | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate]\n\
-         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate]",
+         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate]\n",
         f, f, f
     );
     panic!("No arguments");
