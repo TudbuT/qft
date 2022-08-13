@@ -281,7 +281,7 @@ fn receiver(args: &Vec<String>) {
 
         file.write(buf).expect("write error");
         bytes_received += len as u64;
-        if bytes_received % 4096 == 0 {
+        if bytes_received % (256 * 20) == 0 {
             print!("\rReceived {} bytes", bytes_received);
         }
     }
