@@ -247,10 +247,11 @@ fn sender(args: &Vec<String>) {
             return;
         }
 
+        let m = unix_millis();
         sc.write_safe(&buf[..read]).expect("send error");
         bytes_sent += read as u64;
         if (bytes_sent % (br * 20) as u64) < (br as u64) {
-            print!("\rSent {} bytes", bytes_sent);
+            print!("\r\x1b[KSent {} bytes with ping {}", bytes_sent, unix_millis() - m);
             stdout().flush().unwrap();
         }
     }
@@ -280,10 +281,11 @@ fn receiver(args: &Vec<String>) {
             return;
         }
 
+        let m = unix_millis();
         file.write(buf).expect("write error");
         bytes_received += len as u64;
         if (bytes_received % (br * 20) as u64) < (br as u64) {
-            print!("\rReceived {} bytes", bytes_received);
+            print!("\r\x1b[KReceived {} bytes with ping {}", bytes_received, unix_millis() - m);
             stdout().flush().unwrap();
         }
     }
@@ -334,13 +336,11 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
     println!("Waiting...");
     let mut stop = false;
     while !stop {
-        let m = unix_millis();
-        thread::sleep(Duration::from_millis(500 - (m % 500)));
+        thread::sleep(Duration::from_millis(500 - (unix_millis() % 500)));
         println!("CONNECT {}", unix_millis());
         holepunch.send(&[0]).expect("connection failed");
         let result = holepunch.recv(&mut [0, 0]);
         if result.is_ok() && result.unwrap() == 1 {
-            println!("Ping: {}", unix_millis() - m);
             holepunch.send(&[0, 0]).expect("connection failed");
             let result = holepunch.recv(&mut [0, 0]);
             if result.is_ok() && result.unwrap() == 2 {
