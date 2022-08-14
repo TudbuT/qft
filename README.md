@@ -14,8 +14,8 @@ QFT is a small command line application for Quick Peer-To-Peer UDP file transfer
 - To use qfts and qftr aliases on linux or mac, run:
   run this:
 ```sh
-echo 'alias qftr="qft receiver tudbut.de:4277"' >> ~/.bashrc
-echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.bashrc
+echo 'alias qftr="qft receiver tudbut.de:4277"' >> ~/.${SHELL}rc
+echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.${SHELL}rc
 ```
 
 ## Troubleshooting
