@@ -340,6 +340,7 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
         holepunch.send(&[0]).expect("connection failed");
         let result = holepunch.recv(&mut [0, 0]);
         if result.is_ok() && result.unwrap() == 1 {
+            println!("Ping: {}", unix_millis() - m);
             holepunch.send(&[0, 0]).expect("connection failed");
             let result = holepunch.recv(&mut [0, 0]);
             if result.is_ok() && result.unwrap() == 2 {
@@ -347,11 +348,7 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
             }
         }
     }
-    println!(
-        "Holepunch and connection successful. Running with {} (partner) and :{} (you).",
-        bind_addr,
-        holepunch.local_addr().unwrap().port()
-    );
+    println!("Holepunch and connection successful.");
     return holepunch;
 }
 
