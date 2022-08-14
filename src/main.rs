@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
-    fs::File,
-    io::{stdout, Error, Read, Write},
+    fs::{File, OpenOptions},
+    io::{stdout, Error, Read, Write, Seek, SeekFrom},
     net::*,
     str::FromStr,
     thread,
@@ -67,7 +67,7 @@ impl SafeReadWrite {
                         panic!("bad buf length")
                     }
                 }
-                Err(x) => return Err(x),
+                Err(_) => {}
             }
             let mut buf = [0, 0];
             match self.socket.recv(&mut buf).ok() {
@@ -147,7 +147,7 @@ impl SafeReadWrite {
                         panic!("internet down")
                     }
                 }
-                Err(_) => return self.socket,
+                Err(_) => {},
             }
             let mut buf = [0, 0];
             match self.socket.recv(&mut buf).ok() {
@@ -227,6 +227,7 @@ fn sender(args: &Vec<String>) {
     let connection = holepunch(args);
     let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
         .expect("This is not a correct number");
+    let begin = args.get(6).map(|s| u64::from_str_radix(s.as_str(), 10)).unwrap_or(Ok(0)).expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf = buf.leak();
@@ -235,6 +236,12 @@ fn sender(args: &Vec<String>) {
         panic!("unreachable")
     }))
     .expect("file not readable");
+
+    if begin != 0 {
+        println!("Skipping to {}...", begin);
+        file.seek(SeekFrom::Start(begin)).expect("unable to skip");
+        println!("Done.");
+    }
 
     let mut sc = SafeReadWrite::new(connection);
     let mut bytes_sent: u64 = 0;
@@ -261,14 +268,21 @@ fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
     let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
         .expect("This is not a correct number");
+    let begin = args.get(6).map(|s| u64::from_str_radix(s.as_str(), 10)).unwrap_or(Ok(0)).expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf: &[u8] = buf.leak();
-    let mut file = File::create(args.get(4).unwrap_or_else(|| {
+    let mut file = OpenOptions::new().truncate(false).open(args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
     }))
     .expect("file not writable");
+
+    if begin != 0 {
+        println!("Skipping to {}...", begin);
+        file.seek(SeekFrom::Start(begin)).expect("unable to skip");
+        println!("Done.");
+    }
 
     let mut sc = SafeReadWrite::new(connection);
     let mut bytes_received: u64 = 0;
@@ -358,8 +372,8 @@ fn print_args(args: &Vec<String>) {
     println!(
         "No arguments. Needed: \n\
          | {} helper <bind-port>\n\
-         | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate]\n\
-         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate]\n",
+         | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
+         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n",
         f, f, f
     );
     panic!("No arguments");
