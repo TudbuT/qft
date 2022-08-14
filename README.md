@@ -17,3 +17,4 @@ QFT is a small command line application for Quick Peer-To-Peer UDP file transfer
 ### It constantly says `CONNECTING`
 One of your ends didn't correctly connect to the helper. Stop the transfer on both ends
 and try again.
+
