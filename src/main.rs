@@ -273,6 +273,7 @@ fn receiver(args: &Vec<String>) {
     let mut sc = SafeReadWrite::new(connection);
     let mut bytes_received: u64 = 0;
     loop {
+        let m = unix_millis();
         let (mbuf, len) = sc.read_safe(buf).expect("read error");
         buf = &mbuf.leak()[..len];
         if len == 0 {
@@ -280,12 +281,12 @@ fn receiver(args: &Vec<String>) {
             println!("Transfer done. Thank you!");
             return;
         }
+        let m = unix_millis() - m;
 
-        let m = unix_millis();
         file.write(buf).expect("write error");
         bytes_received += len as u64;
         if (bytes_received % (br * 20) as u64) < (br as u64) {
-            print!("\r\x1b[KReceived {} bytes with ping {}", bytes_received, unix_millis() - m);
+            print!("\r\x1b[KReceived {} bytes with ping {}", bytes_received, m);
             stdout().flush().unwrap();
         }
     }
