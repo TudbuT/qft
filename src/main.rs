@@ -272,7 +272,7 @@ fn receiver(args: &Vec<String>) {
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf: &[u8] = buf.leak();
-    let mut file = OpenOptions::new().truncate(false).open(args.get(4).unwrap_or_else(|| {
+    let mut file = OpenOptions::new().truncate(false).write(true).create(true).open(&args.get(4).unwrap_or_else(|| {
         print_args(args);
         panic!("unreachable")
     }))
