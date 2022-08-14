@@ -338,9 +338,13 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
         thread::sleep(Duration::from_millis(500 - (m % 500)));
         println!("CONNECT {}", unix_millis());
         holepunch.send(&[0]).expect("connection failed");
-        let result = holepunch.recv(&mut [0]);
+        let result = holepunch.recv(&mut [0, 0]);
         if result.is_ok() && result.unwrap() == 1 {
-            stop = true;
+            holepunch.send(&[0, 0]).expect("connection failed");
+            let result = holepunch.recv(&mut [0, 0]);
+            if result.is_ok() && result.unwrap() == 2 {
+                stop = true;
+            }
         }
     }
     println!(
