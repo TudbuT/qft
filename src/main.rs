@@ -8,24 +8,11 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-trait Ordinal {
-    fn ordinal(&self) -> isize;
-}
-
+#[derive(PartialOrd, PartialEq)]
 enum SafeReadWritePacket {
-    WRITE,
-    ACK,
-    END,
-}
-
-impl Ordinal for SafeReadWritePacket {
-    fn ordinal(&self) -> isize {
-        match self {
-            SafeReadWritePacket::WRITE => 0,
-            SafeReadWritePacket::ACK => 1,
-            SafeReadWritePacket::END => 2,
-        }
-    }
+    Write,
+    Ack,
+    End,
 }
 
 struct SafeReadWrite {
@@ -55,7 +42,7 @@ impl SafeReadWrite {
         self.packet_count_out += 1;
 
         let mut buf = Vec::from(buf);
-        buf.insert(0, SafeReadWritePacket::WRITE.ordinal() as u8);
+        buf.insert(0, SafeReadWritePacket::Write as u8);
         buf.insert(0, id);
         let buf = buf.as_slice();
 
@@ -75,7 +62,7 @@ impl SafeReadWrite {
                     if x == 0 {
                         continue;
                     }
-                    if buf[1] == SafeReadWritePacket::ACK.ordinal() as u8 && buf[0] == id {
+                    if buf[1] == SafeReadWritePacket::Ack as u8 && buf[0] == id {
                         resend = false;
                     }
                 }
@@ -109,7 +96,7 @@ impl SafeReadWrite {
                     }
                     if buf[0] <= self.packet_count_in as u8 {
                         self.socket
-                            .send(&[buf[0], SafeReadWritePacket::ACK.ordinal() as u8])
+                            .send(&[buf[0], SafeReadWritePacket::Ack as u8])
                             .expect("send error");
                     }
                     if buf[0] == self.packet_count_in as u8 {
@@ -117,7 +104,7 @@ impl SafeReadWrite {
                         self.packet_count_in += 1;
                         r.1 = x - 2;
                     }
-                    if buf[1] == SafeReadWritePacket::END.ordinal() as u8 {
+                    if buf[1] == SafeReadWritePacket::End as u8 {
                         return Ok((vec![], 0));
                     }
                 }
@@ -135,7 +122,7 @@ impl SafeReadWrite {
         self.packet_count_out += 1;
 
         let mut buf = vec![];
-        buf.insert(0, SafeReadWritePacket::END.ordinal() as u8);
+        buf.insert(0, SafeReadWritePacket::End as u8);
         buf.insert(0, id);
         let buf = buf.as_slice();
 
@@ -155,7 +142,7 @@ impl SafeReadWrite {
                     if x == 0 {
                         continue;
                     }
-                    if buf[1] == SafeReadWritePacket::ACK.ordinal() as u8 && buf[0] == id {
+                    if buf[1] == SafeReadWritePacket::Ack as u8 && buf[0] == id {
                         resend = false;
                     }
                 }
