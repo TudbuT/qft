@@ -16,6 +16,8 @@ qft receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
 
 ## What helpers do
 
+Helpers are NOT relays for data, they are only used to ESTABLISH the connection.
+
 Helpers are there to help with holepunching.
 - P1 connects\* to helper
 - P1 sends the phrase to the helper
