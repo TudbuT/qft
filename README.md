@@ -24,7 +24,7 @@ echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.(shell)rc
   connection is back! Doesn't work? Check out the "Resume a fully stopped transfer" section!
 - Did you know you can hibernate or suspend your computer while it's transferring and it'll continue
   where it left of, even when only one side is suspended (unless your router blocked the port, read 
-  the "Resume a fully stopped transfer" section in that case)
+  the "Resume a fully stopped transfer" section in that case)?
 
 ## Resume a fully stopped transfer
 You most likely won't need this unless the transfer completely died due to a VERY long pause or a
