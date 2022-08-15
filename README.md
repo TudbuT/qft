@@ -17,6 +17,22 @@ echo 'alias qftr="qft receiver tudbut.de:4277"' >> ~/.(shell)rc
 echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.(shell)rc
 ```
 
+## Cool stuff
+- Files are transferred over UDP, but qft has additional reliability measures in place to avoid
+  broken files.
+- Unreliable internet connection? No problem! QFT will simply pause transmission until the
+  connection is back! Doesn't work? Check out the "Resume a fully stopped transfer" section!
+- Did you know you can hibernate or suspend your computer while it's transferring and it'll continue
+  where it left of, even when only one side is suspended (unless your router blocked the port, read 
+  the "Resume a fully stopped transfer" section in that case)
+
+## Resume a fully stopped transfer
+You most likely won't need this unless the transfer completely died due to a VERY long pause or a
+computer restart, but if you do:
+
+Stop qft on both ends and start it again with the [skip] parameter in place (if you didn't specify a
+bitrate before, the default is 256). It will skip those bytes and continue where you specified.
+
 ## Troubleshooting
 
 ### It constantly says `CONNECTING`
