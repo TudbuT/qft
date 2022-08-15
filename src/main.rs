@@ -51,10 +51,12 @@ impl SafeReadWrite {
             match self.socket.send(buf) {
                 Ok(x) => {
                     if x != buf.len() {
-                        panic!("bad buf length")
+                        continue;
                     }
                 }
-                Err(_) => {}
+                Err(_) => {
+                    continue;
+                }
             }
             let mut buf = [0, 0];
             match self.socket.recv(&mut buf).ok() {
@@ -131,10 +133,12 @@ impl SafeReadWrite {
             match self.socket.send(buf) {
                 Ok(x) => {
                     if x != buf.len() {
-                        panic!("internet down")
+                        continue;
                     }
                 }
-                Err(_) => {}
+                Err(_) => {
+                    continue;
+                }
             }
             let mut buf = [0, 0];
             match self.socket.recv(&mut buf).ok() {
@@ -161,7 +165,7 @@ fn main() {
     }
     match args
         .get(1)
-        .expect("no args supplied, check if the first arg is truly the program name")
+        .unwrap() // checked in previous if-statement
         .as_str()
     {
         "helper" => helper(&args),
