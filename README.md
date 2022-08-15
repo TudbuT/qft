@@ -14,6 +14,29 @@ qft sender   <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
 qft receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
 ```
 
+## What helpers do
+
+Helpers are there to help with holepunching.
+- P1 connects\* to helper
+- P1 sends the phrase to the helper
+- P1 waits for a response
+- Some time passes
+- P2 connects\* to the same helper
+- P2 sends the phrase to the helper
+- P2 gets P1's public IP and port
+- P1 gets P2's public IP and port
+- P1 and P2 disconnect\* from the helper
+- P1 and P2 start a loop:
+  - wait until their system clock is at .0 or .5 of a second
+  - fire a packet at eachother at the same time
+  - try to receive the packet from the other one
+  - if none is received, loop again
+  - if one is received, exit the loop
+- Connection between P1 and P2 is established.
+
+\*UDP is a connection-less protocol, there are no handshakes. The word "connection" is used here as
+an indicator that data is exchanged between the "connected" parties. The word "disconnect" is used
+here as an indicator that no more data is transferred between the "previously connected" parties.
 
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
