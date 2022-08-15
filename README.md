@@ -12,10 +12,9 @@ QFT is a small command line application for Quick Peer-To-Peer UDP file transfer
   boost transfer speeds (higher = faster), but a too large number might cause unreliability
   due to local network conditions or VPNs.
 - To use qfts and qftr aliases on linux or mac, run:
-  run this:
 ```sh
-echo 'alias qftr="qft receiver tudbut.de:4277"' >> ~/.${SHELL}rc
-echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.${SHELL}rc
+echo 'alias qftr="qft receiver tudbut.de:4277"' >> ~/.(shell)rc
+echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.(shell)rc
 ```
 
 ## Troubleshooting
