@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fs::{File, OpenOptions},
-    io::{stdout, Error, Read, Write, Seek, SeekFrom},
+    io::{stdout, Error, Read, Seek, SeekFrom, Write},
     net::*,
     str::FromStr,
     thread,
@@ -147,7 +147,7 @@ impl SafeReadWrite {
                         panic!("internet down")
                     }
                 }
-                Err(_) => {},
+                Err(_) => {}
             }
             let mut buf = [0, 0];
             match self.socket.recv(&mut buf).ok() {
@@ -227,7 +227,11 @@ fn sender(args: &Vec<String>) {
     let connection = holepunch(args);
     let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
         .expect("This is not a correct number");
-    let begin = args.get(6).map(|s| u64::from_str_radix(s.as_str(), 10)).unwrap_or(Ok(0)).expect("bad begin operand");
+    let begin = args
+        .get(6)
+        .map(|s| u64::from_str_radix(s.as_str(), 10))
+        .unwrap_or(Ok(0))
+        .expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf = buf.leak();
@@ -258,7 +262,11 @@ fn sender(args: &Vec<String>) {
         sc.write_safe(&buf[..read]).expect("send error");
         bytes_sent += read as u64;
         if (bytes_sent % (br * 20) as u64) < (br as u64) {
-            print!("\r\x1b[KSent {} bytes with ping {}", bytes_sent, unix_millis() - m);
+            print!(
+                "\r\x1b[KSent {} bytes with ping {}",
+                bytes_sent,
+                unix_millis() - m
+            );
             stdout().flush().unwrap();
         }
     }
@@ -268,15 +276,23 @@ fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
     let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
         .expect("This is not a correct number");
-    let begin = args.get(6).map(|s| u64::from_str_radix(s.as_str(), 10)).unwrap_or(Ok(0)).expect("bad begin operand");
+    let begin = args
+        .get(6)
+        .map(|s| u64::from_str_radix(s.as_str(), 10))
+        .unwrap_or(Ok(0))
+        .expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
     let mut buf: &[u8] = buf.leak();
-    let mut file = OpenOptions::new().truncate(false).write(true).create(true).open(&args.get(4).unwrap_or_else(|| {
-        print_args(args);
-        panic!("unreachable")
-    }))
-    .expect("file not writable");
+    let mut file = OpenOptions::new()
+        .truncate(false)
+        .write(true)
+        .create(true)
+        .open(&args.get(4).unwrap_or_else(|| {
+            print_args(args);
+            panic!("unreachable")
+        }))
+        .expect("file not writable");
 
     if begin != 0 {
         println!("Skipping to {}...", begin);
