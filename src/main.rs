@@ -8,7 +8,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-#[derive(PartialOrd, PartialEq)]
+#[derive(Ord, Eq, PartialOrd, PartialEq)]
 enum SafeReadWritePacket {
     Write,
     Ack,
