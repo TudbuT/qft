@@ -374,23 +374,25 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
         }
     } else {
         println!("Connecting...");
-        let mut stop = false;
-        while !stop {
-            thread::sleep(Duration::from_millis(500 - (unix_millis() % 500)));
-            for _ in 0..40 {
-                let m = unix_millis();
-                let _ = holepunch.send(&[0]);
-                thread::sleep(Duration::from_millis((50 - (unix_millis() - m)).max(0)));
-            }
-            let mut result = Ok(1);
-            while result.is_ok() && result.unwrap() == 1 {
-                result = holepunch.recv(&mut [0, 0]);
-            }
-            holepunch.send(&[0, 0]).expect("connection failed");
+        thread::sleep(Duration::from_millis(500 - (unix_millis() % 500)));
+        for _ in 0..40 {
+            let m = unix_millis();
+            let _ = holepunch.send(&[0]);
+            thread::sleep(Duration::from_millis((50 - (unix_millis() - m)).max(0)));
+        }
+        let mut result = Ok(1);
+        while result.is_ok() && result.unwrap() == 1 {
             result = holepunch.recv(&mut [0, 0]);
-            if result.is_ok() && result.unwrap() == 2 {
-                stop = true;
-            }
+        }
+        holepunch.send(&[0, 0]).expect("connection failed");
+        holepunch.send(&[0, 0]).expect("connection failed");
+        result = Ok(1);
+        while result.is_ok() && result.unwrap() != 2 {
+            result = holepunch.recv(&mut [0, 0]);
+        }
+        result = Ok(1);
+        while result.is_ok() && result.unwrap() == 2 {
+            result = holepunch.recv(&mut [0, 0]);
         }
     }
     println!("Holepunch and connection successful.");
