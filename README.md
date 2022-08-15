@@ -1,6 +1,13 @@
 # qft
 QFT is a small command line application for Quick Peer-To-Peer UDP file transfer.
 
+## If a friend sent you here...
+
+...look at the "Releases" section on the sidebar. You should see a link titled vX.Y.Z. Click on
+that, and then choose the right file for your OS: `qft` for Linux, `qft-mac` for Mac, and `qft.exe`
+for Windows. Download this file, make it executable in case of Linux or Mac, and then follow your 
+friend's instructions on how to receive the file they wanted to send you.
+
 ## Usage:
 - Find a public QFT helper (for example tudbut.de:4277)
 - On the sender PC, enter `qft sender <helper> <shared-phrase> <filename>`.
