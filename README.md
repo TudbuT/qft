@@ -52,3 +52,5 @@ error of <0.1 seconds! Holepunching strongly relies on the time and date matchin
 suggestion on how I can mitigate this reliance on time, please open an issue!)
 
 ## [Relevant XKCD](https://xkcd.com/949)
+
+![Relevant XKCD Image](https://imgs.xkcd.com/comics/file_transfer.png)
