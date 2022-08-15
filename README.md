@@ -59,8 +59,8 @@ source ~/.(shell)rc
 - Unreliable internet connection? No problem! QFT will simply pause transmission until the
   connection is back! Doesn't work? Check out the "Resume a fully stopped transfer" section!
 - Did you know you can hibernate or suspend your computer while it's transferring and it'll continue
-  where it left of, even when only one side is suspended (unless your router blocked the port, read 
-  the "Resume a fully stopped transfer" section in that case)?
+  where it left of, even when only one side is suspended? (Unless your router blocked the port, read 
+  the "Resume a fully stopped transfer" section in that case)
 - It's written in *100% pure Rust*.
 
 ## Resume a fully stopped transfer
