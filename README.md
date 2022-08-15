@@ -7,6 +7,14 @@ QFT is a small command line application for Quick Peer-To-Peer UDP file transfer
 - On the receiver PC, enter `qft receiver <helper> <shared-phrase> <filename>`.
 - Both PCs should start transferring after a short while. If they don't, try again.
 
+### Arguments:
+```
+qft helper   <bind-port>
+qft sender   <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
+qft receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
+```
+
+
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
   boost transfer speeds (higher = faster), but a too large number might cause unreliability
