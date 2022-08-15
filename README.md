@@ -35,8 +35,8 @@ Helpers are there to help with holepunching.
 - Connection between P1 and P2 is established.
 
 \*UDP is a connection-less protocol, there are no handshakes. The word "connection" is used here as
-an indicator that data is exchanged between the "connected" parties. The word "disconnect" is used
-here as an indicator that no more data is transferred between the "previously connected" parties.
+an indicator that data will be exchanged between the "connected" parties. The word "disconnect" is used
+here as an indicator that no more data will be exchanged between the "previously connected" parties.
 
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
