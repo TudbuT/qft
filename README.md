@@ -43,7 +43,7 @@ here as an indicator that no more data will be exchanged between the "previously
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
   boost transfer speeds (higher = faster), but a too large number might cause unreliability
-  due to local network conditions or VPNs.
+  due to local network conditions or VPNs. The maximum possible is 65533 (65535 - 2).
 - To use qfts and qftr aliases on linux or mac, run (replacing `(shell)` with your shell name,
   usually bash or zsh):
 ```sh
