@@ -28,11 +28,10 @@ Helpers are there to help with holepunching.
 - P2 gets P1's public IP and port
 - P1 gets P2's public IP and port
 - P1 and P2 disconnect\* from the helper
-- P1 and P2 start a loop:
-  - wait until their system clock is at .0 or .5 of a second
-  - fire a packet at eachother at the same time
-  - try to receive the packet from the other one
-  - if none is received, loop again
+- P1 and P2 start a loop (slightly simplified):
+  - fire a packet at eachother multiple times
+  - try to receive as many packets from the other one
+  - if none are received, loop again
   - if one is received, exit the loop
 - Connection between P1 and P2 is established.
 
@@ -73,11 +72,9 @@ bitrate before, the default is 256). It will skip those bytes and continue where
 
 ## Troubleshooting
 
-### It constantly says `CONNECTING`
+### It says `Connecting...` but doesn't connect
 One of your ends didn't correctly connect to the helper. Stop the transfer on both ends
-and try again. If it still doesn't work, make SURE the time and date on both ends are within an
-error of <0.1 seconds! Holepunching strongly relies on the time and date matching. (If you have any
-suggestion on how I can mitigate this reliance on time, please open an issue!)
+and try again.
 
 ## [Relevant XKCD](https://xkcd.com/949)
 

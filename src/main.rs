@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    env,
     fs::{File, OpenOptions},
     io::{stdout, Error, Read, Seek, SeekFrom, Write},
     net::*,
@@ -355,16 +356,38 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
     holepunch
         .set_write_timeout(Some(Duration::from_secs(1)))
         .unwrap();
-    println!("Waiting...");
-    let mut stop = false;
-    while !stop {
-        thread::sleep(Duration::from_millis(500 - (unix_millis() % 500)));
-        println!("CONNECT {}", unix_millis());
-        holepunch.send(&[0]).expect("connection failed");
-        let result = holepunch.recv(&mut [0, 0]);
-        if result.is_ok() && result.unwrap() == 1 {
-            holepunch.send(&[0, 0]).expect("connection failed");
+    if env::var("QFT_USE_TIMED_HOLEPUNCH").is_ok() {
+        println!("Waiting...");
+        let mut stop = false;
+        while !stop {
+            thread::sleep(Duration::from_millis(500 - (unix_millis() % 500)));
+            println!("CONNECT {}", unix_millis());
+            let _ = holepunch.send(&[0]);
             let result = holepunch.recv(&mut [0, 0]);
+            if result.is_ok() && result.unwrap() == 1 {
+                holepunch.send(&[0, 0]).expect("connection failed");
+                let result = holepunch.recv(&mut [0, 0]);
+                if result.is_ok() && result.unwrap() == 2 {
+                    stop = true;
+                }
+            }
+        }
+    } else {
+        println!("Connecting...");
+        let mut stop = false;
+        while !stop {
+            thread::sleep(Duration::from_millis(500 - (unix_millis() % 500)));
+            for _ in 0..40 {
+                let m = unix_millis();
+                let _ = holepunch.send(&[0]);
+                thread::sleep(Duration::from_millis((50 - (unix_millis() - m)).max(0)));
+            }
+            let mut result = Ok(1);
+            while result.is_ok() && result.unwrap() == 1 {
+                result = holepunch.recv(&mut [0, 0]);
+            }
+            holepunch.send(&[0, 0]).expect("connection failed");
+            result = holepunch.recv(&mut [0, 0]);
             if result.is_ok() && result.unwrap() == 2 {
                 stop = true;
             }
