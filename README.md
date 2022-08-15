@@ -22,4 +22,6 @@ echo 'alias qfts="qft sender tudbut.de:4277"' >> ~/.${SHELL}rc
 
 ### It constantly says `CONNECTING`
 One of your ends didn't correctly connect to the helper. Stop the transfer on both ends
-and try again.
+and try again. If it still doesn't work, make SURE the time and date on both ends are within an
+error of <0.1 seconds! Holepunching strongly relies on the time and date matching. (If you have any
+suggestion on how I can mitigate this reliance on time, please open an issue!)
