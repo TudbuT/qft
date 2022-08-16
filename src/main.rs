@@ -43,6 +43,7 @@ impl SafeReadWrite {
         }
 
         let id = (self.packet_count_out as u16).to_be_bytes();
+        let idn = self.packet_count_out as u16;
         self.packet_count_out += 1;
 
         let mut vbuf = Vec::from(buf);
@@ -69,6 +70,7 @@ impl SafeReadWrite {
         if self.last_transmitted.len() < 50 {
             self.socket.set_read_timeout(Some(Duration::from_millis(1))).unwrap();
         }
+        let mut wait = false;
         loop {
             match self.socket.recv(&mut buf).ok() {
                 Some(x) => {
@@ -76,33 +78,44 @@ impl SafeReadWrite {
                         continue;
                     }
                     if buf[2] == SafeReadWritePacket::Ack as u8 {
+                        let n = u16::from_be_bytes([buf[0], buf[1]]);
                         self.last_transmitted
-                            .remove(&u16::from_be_bytes([buf[0], buf[1]]));
+                            .remove(&n);
+                        if wait && n == idn {
+                            wait = false;
+                        }
                     }
                     if buf[2] == SafeReadWritePacket::ResendRequest as u8 {
-                        let buf = self
-                            .last_transmitted
-                            .get(&u16::from_be_bytes([buf[0], buf[1]]))
-                            .expect("tried to ResendRequest an Ack'd packet");
-                        loop {
-                            // resend until success
-                            match self.socket.send(&buf.as_slice()) {
-                                Ok(x) => {
-                                    if x != buf.len() {
+                        let mut n = u16::from_be_bytes([buf[0], buf[1]]);
+                        wait = true;
+                        while n <= idn {
+                            let buf = self
+                                .last_transmitted
+                                .get(&n)
+                                .expect("tried to ResendRequest an Ack'd packet");
+                            loop {
+                                // resend until success
+                                match self.socket.send(&buf.as_slice()) {
+                                    Ok(x) => {
+                                        if x != buf.len() {
+                                            continue;
+                                        }
+                                    }
+                                    Err(_) => {
                                         continue;
                                     }
-                                }
-                                Err(_) => {
-                                    continue;
-                                }
-                            };
-                            break;
+                                };
+                                break;
+                            }
+                            // do NOT remove from last_transmitted yet, wait for Ack to do that.
+                            n = (n as u64 + 1) as u16;
                         }
-                        // do NOT remove from last_transmitted yet, wait for Ack to do that.
                     }
                 }
                 None => {
-                    break;
+                    if !wait {
+                        break;
+                    }
                 }
             }
         }
@@ -144,7 +157,7 @@ impl SafeReadWrite {
                         self.packet_count_in += 1;
                         r.1 = x - 3;
                     }
-                    if id > self.packet_count_in as u16 {
+                    else if id > self.packet_count_in as u16 || (id < 50 && (self.packet_count_in as u16) > 0xffff - 50) {
                         // ask to resend, then do nothing
                         let id = (self.packet_count_in as u16).to_be_bytes();
                         self.socket
@@ -205,6 +218,7 @@ impl SafeReadWrite {
                             .last_transmitted
                             .get(&u16::from_be_bytes([buf[0], buf[1]]))
                             .expect("tried to ResendRequest an Ack'd packet");
+                        println!("\nCatching up...");
                         loop {
                             // resend until success
                             match self.socket.send(&buf.as_slice()) {
