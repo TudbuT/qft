@@ -330,7 +330,7 @@ fn sender(args: &Vec<String>) {
     let mut bytes_sent: u64 = 0;
     loop {
         let read = file.read(&mut buf).expect("file read error");
-        if read == 0 {
+        if read == 0 && !env::var("QFT_STREAM").is_ok() {
             println!();
             println!("Transfer done. Thank you!");
             sc.end();
@@ -360,7 +360,7 @@ fn receiver(args: &Vec<String>) {
         .expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
     buf.resize(br as usize, 0);
-    let mut buf: &[u8] = buf.leak();
+    let buf: &[u8] = buf.leak();
     let mut file = OpenOptions::new()
         .truncate(false)
         .write(true)
@@ -381,7 +381,7 @@ fn receiver(args: &Vec<String>) {
     let mut bytes_received: u64 = 0;
     loop {
         let (mbuf, len) = sc.read_safe(buf).expect("read error");
-        buf = &mbuf.leak()[..len];
+        let buf = &mbuf.leak()[..len];
         if len == 0 {
             println!();
             println!("Transfer done. Thank you!");
@@ -389,6 +389,7 @@ fn receiver(args: &Vec<String>) {
         }
 
         file.write(buf).expect("write error");
+        file.flush().expect("file flush error");
         bytes_received += len as u64;
         if (bytes_received % (br * 20) as u64) < (br as u64) {
             print!("\r\x1b[KReceived {} bytes", bytes_received);
