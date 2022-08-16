@@ -52,6 +52,8 @@ here as an indicator that no more data will be exchanged between the "previously
   due to local network conditions or VPNs. The maximum possible is 65533 (65535 - 2).
 - Helpers don't **have to** be run on a public server, they work in LAN too, but that way, only
   computers in the same LAN will be able to use them.
+- You can allow streaming (for example when you want to transmit from /dev/stdin) by setting
+  the `QFT_STREAM` environmental variable.
 - To use qfts and qftr aliases on linux or mac, run (replacing `(shell)` with your shell name,
   usually bash or zsh):
 ```sh
