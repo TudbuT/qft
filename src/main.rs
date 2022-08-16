@@ -81,8 +81,10 @@ impl SafeReadWrite {
                         let n = u16::from_be_bytes([buf[0], buf[1]]);
                         self.last_transmitted
                             .remove(&n);
-                        if wait && n == idn {
+                        if n == idn {
                             wait = false;
+                            self.last_transmitted.clear(); // if the latest packet is ACK'd, all
+                                                           // previous ones must be as well.
                         }
                     }
                     if buf[2] == SafeReadWritePacket::ResendRequest as u8 {
