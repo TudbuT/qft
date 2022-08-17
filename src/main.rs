@@ -68,9 +68,15 @@ impl SafeReadWrite {
         }
         let mut buf = [0, 0, 0];
         if self.last_transmitted.len() < 50 {
-            self.socket.set_read_timeout(Some(Duration::from_millis(1))).unwrap();
+            self.socket
+                .set_read_timeout(Some(Duration::from_millis(1)))
+                .unwrap();
         }
-        let mut wait = false;
+        let mut wait = idn == 0xffff;
+        if wait {
+            print!("\r\x1b[KPacket ID needs to wrap. Waiting for partner to catch up...")
+        }
+        let mut is_catching_up = false;
         loop {
             match self.socket.recv(&mut buf).ok() {
                 Some(x) => {
@@ -79,9 +85,11 @@ impl SafeReadWrite {
                     }
                     if buf[2] == SafeReadWritePacket::Ack as u8 {
                         let n = u16::from_be_bytes([buf[0], buf[1]]);
-                        self.last_transmitted
-                            .remove(&n);
+                        self.last_transmitted.remove(&n);
                         if n == idn {
+                            if idn == 0xffff {
+                                println!("\r\x1b[KPacket ID wrap successful.");
+                            }
                             wait = false;
                             self.last_transmitted.clear(); // if the latest packet is ACK'd, all
                                                            // previous ones must be as well.
@@ -89,12 +97,19 @@ impl SafeReadWrite {
                     }
                     if buf[2] == SafeReadWritePacket::ResendRequest as u8 {
                         let mut n = u16::from_be_bytes([buf[0], buf[1]]);
+                        if !is_catching_up {
+                            println!("\r\x1b[KA packet dropped: {}", &n);
+                        }
                         wait = true;
-                        while n <= idn {
-                            let buf = self
-                                .last_transmitted
-                                .get(&n)
-                                .expect("tried to ResendRequest an Ack'd packet");
+                        is_catching_up = true;
+                        while n <= idn && !(idn == 0xffff && n == 0) {
+                            let buf = self.last_transmitted.get(&n).expect(
+                                format!(
+                                    "tried to ResendRequest an Ack'd packet with ID {}. Current ID: {}",
+                                    &n, &idn
+                                )
+                                .as_str(),
+                            );
                             loop {
                                 // resend until success
                                 match self.socket.send(&buf.as_slice()) {
@@ -110,7 +125,7 @@ impl SafeReadWrite {
                                 break;
                             }
                             // do NOT remove from last_transmitted yet, wait for Ack to do that.
-                            n = (n as u64 + 1) as u16;
+                            n += 1;
                         }
                     }
                 }
@@ -121,7 +136,9 @@ impl SafeReadWrite {
                 }
             }
         }
-        self.socket.set_read_timeout(Some(Duration::from_millis(1000))).unwrap();
+        self.socket
+            .set_read_timeout(Some(Duration::from_millis(1000)))
+            .unwrap();
         return Ok(());
     }
 
@@ -142,6 +159,7 @@ impl SafeReadWrite {
         let mut r = (vec![], 0);
 
         let mut try_again = true;
+        let mut is_catching_up = false;
         while try_again {
             match self.socket.recv(buf) {
                 Ok(x) => {
@@ -155,11 +173,21 @@ impl SafeReadWrite {
                             .expect("send error");
                     }
                     if id == self.packet_count_in as u16 {
+                        if id == 0xffff {
+                            println!("\r\x1b[KPacket ID wrap successful.");
+                        }
                         try_again = false;
                         self.packet_count_in += 1;
                         r.1 = x - 3;
-                    }
-                    else if id > self.packet_count_in as u16 || (id < 50 && (self.packet_count_in as u16) > 0xffff - 50) {
+                    } else if id > self.packet_count_in as u16 && (id - self.packet_count_in as u16) < 0xC000 {
+                        if !is_catching_up {
+                            println!(
+                                "\r\x1b[KA packet dropped: {} (got) is newer than {} (expected)",
+                                &id,
+                                &(self.packet_count_in as u16)
+                            );
+                        }
+                        is_catching_up = true;
                         // ask to resend, then do nothing
                         let id = (self.packet_count_in as u16).to_be_bytes();
                         self.socket
@@ -259,6 +287,7 @@ fn main() {
         "helper" => helper(&args),
         "sender" => sender(&args),
         "receiver" => receiver(&args),
+        "version" => println!("QFT version: {}", env!("CARGO_PKG_VERSION")),
         _ => print_args(&args),
     }
 }
@@ -340,10 +369,7 @@ fn sender(args: &Vec<String>) {
         sc.write_safe(&buf[..read]).expect("send error");
         bytes_sent += read as u64;
         if (bytes_sent % (br * 20) as u64) < (br as u64) {
-            print!(
-                "\r\x1b[KSent {} bytes",
-                bytes_sent
-            );
+            print!("\r\x1b[KSent {} bytes", bytes_sent);
             stdout().flush().unwrap();
         }
     }
@@ -489,8 +515,9 @@ fn print_args(args: &Vec<String>) {
         "No arguments. Needed: \n\
          | {} helper <bind-port>\n\
          | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
-         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n",
-        f, f, f
+         | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
+         | {} version\n",
+        f, f, f, f
     );
     panic!("No arguments");
 }
