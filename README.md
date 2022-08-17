@@ -85,6 +85,13 @@ bitrate before, the default is 256). It will skip those bytes and continue where
 One of your ends didn't correctly connect to the helper. Stop the transfer on both ends
 and try again.
 
+## Croc
+
+Many people have mentioned how this is like croc. It isn't, because croc uses a relay that all your
+data is sent through. This is a bottleneck and also means that the relay admins are responsible for
+the content that is sent. The relay also buffers a lot of data, meaning its RAM might fill up if the
+sender's connection is much faster than the receiver's.
+
 ## [Relevant XKCD](https://xkcd.com/949)
 
 ![Relevant XKCD Image](https://imgs.xkcd.com/comics/file_transfer.png)
