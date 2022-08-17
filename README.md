@@ -54,7 +54,7 @@ have found are *some* german mobile data providers, but sending large files over
 rarely something you'd want to do - and if so, use something like croc or the magic wormhole, which
 aren't purely true P2P.
 - "Croc is P2P as well, why does this exist?" - Croc is not Peer-to-Peer. Croc uses a relay server
-to exchange data between the two clients. This is Client-to-Server-to-Client, which is *not* really
+to exchange data between the two clients. That is Client-to-Server-to-Client, which is *not* really
 Peer-to-Peer. Peer-to-Peer means two clients sending their data directly to eachother, without a
 server. "Peers make a portion of their resources, such as processing power, disk storage or network
 bandwidth, directly available to other network participants, without the need for central
