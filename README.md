@@ -46,6 +46,17 @@ Helpers are there to help with holepunching.
 an indicator that data will be exchanged between the "connected" parties. The word "disconnect" is used
 here as an indicator that no more data will be exchanged between the "previously connected" parties.
 
+## Debunking some myths about P2P networking
+
+- "True P2P is only possible without a NAT" - [Both my experiments and wikipedia would like to
+have a word about hole punching.](https://en.wikipedia.org/wiki/UDP_hole_punching)
+- "Croc is P2P as well, why does this exist?" - Croc is not Peer-to-Peer. Croc uses a relay server
+to exchange data between the two clients. This is Client-to-Server-to-Client, which is *not* really
+Peer-to-Peer. Peer-to-Peer means two clients sending their data directly to eachother, without a
+server. "Peers make a portion of their resources, such as processing power, disk storage or network
+bandwidth, directly available to other network participants, without the need for central
+coordination by servers or stable hosts." - [Wikipedia](https://en.wikipedia.org/wiki/Peer-to-peer)
+
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
   boost transfer speeds (higher = faster), but a too large number might cause unreliability
@@ -91,7 +102,8 @@ Many people have mentioned how this is like croc. It isn't, because croc uses a 
 data is sent through. This is a bottleneck and also means that the relay admins are responsible for
 the content that is sent. The relay also buffers a lot of data, meaning its RAM might fill up if the
 sender's connection is much faster than the receiver's. Croc being tagged "peer-to-peer" is
-misleading at best and malicious at worst.
+misleading at best and malicious at worst. Read the previous section about P2P myths if you think
+Croc is peer-to-peer.
 
 ## [Relevant XKCD](https://xkcd.com/949)
 
