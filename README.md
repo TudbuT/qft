@@ -90,7 +90,8 @@ and try again.
 Many people have mentioned how this is like croc. It isn't, because croc uses a relay that all your
 data is sent through. This is a bottleneck and also means that the relay admins are responsible for
 the content that is sent. The relay also buffers a lot of data, meaning its RAM might fill up if the
-sender's connection is much faster than the receiver's.
+sender's connection is much faster than the receiver's. Croc being tagged "peer-to-peer" is
+misleading at best and malicious at worst.
 
 ## [Relevant XKCD](https://xkcd.com/949)
 
