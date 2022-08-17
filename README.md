@@ -63,7 +63,7 @@ coordination by servers or stable hosts." - [Wikipedia](https://en.wikipedia.org
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
   boost transfer speeds (higher = faster), but a too large number might cause unreliability
-  due to local network conditions or VPNs. The maximum possible is 65533 (65535 - 2).
+  due to local network conditions or VPNs. The maximum possible is 65532 (65535 - 3).
 - Helpers don't **have to** be run on a public server, they work in LAN too, but that way, only
   computers in the same LAN will be able to use them.
 - You can allow streaming (for example when you want to transmit from /dev/stdin) by setting
