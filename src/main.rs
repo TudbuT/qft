@@ -79,7 +79,9 @@ impl SafeReadWrite {
                         try_again = false;
                         self.packet_count_in += 1;
                         r.1 = x - 3;
-                    } else if id > self.packet_count_in as u16 && (id - self.packet_count_in as u16) < 0xC000 {
+                    } else if id > self.packet_count_in as u16
+                        && (id - self.packet_count_in as u16) < 0xC000
+                    {
                         if !is_catching_up {
                             println!(
                                 "\r\x1b[KA packet dropped: {} (got) is newer than {} (expected)",
@@ -114,7 +116,12 @@ impl SafeReadWrite {
         self.socket
     }
 
-    fn internal_write_safe(&mut self, buf: &[u8], packet: SafeReadWritePacket, flush: bool) -> Result<(), Error> {
+    fn internal_write_safe(
+        &mut self,
+        buf: &[u8],
+        packet: SafeReadWritePacket,
+        flush: bool,
+    ) -> Result<(), Error> {
         if buf.len() > 0xfffc {
             panic!(
                 "too large data packet sent over SafeReadWrite ({} > 0xfffc)",
@@ -221,7 +228,6 @@ impl SafeReadWrite {
             .unwrap();
         return Ok(());
     }
-
 }
 
 fn main() {
@@ -283,11 +289,14 @@ fn helper(args: &Vec<String>) {
 
 fn sender(args: &Vec<String>) {
     let connection = holepunch(args);
-    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
-        .expect("This is not a correct number");
+    let br = args
+        .get(5)
+        .map(|s| u32::from_str_radix(s, 10))
+        .unwrap_or(Ok(256))
+        .expect("bad bitrate argument");
     let begin = args
         .get(6)
-        .map(|s| u64::from_str_radix(s.as_str(), 10))
+        .map(|s| u64::from_str_radix(s, 10))
         .unwrap_or(Ok(0))
         .expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
@@ -327,11 +336,14 @@ fn sender(args: &Vec<String>) {
 
 fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
-    let br = u32::from_str_radix(args.get(5).unwrap_or(&"256".to_string()), 10)
-        .expect("This is not a correct number");
+    let br = args
+        .get(5)
+        .map(|s| u32::from_str_radix(s, 10))
+        .unwrap_or(Ok(256))
+        .expect("bad bitrate argument");
     let begin = args
         .get(6)
-        .map(|s| u64::from_str_radix(s.as_str(), 10))
+        .map(|s| u64::from_str_radix(s, 10))
         .unwrap_or(Ok(0))
         .expect("bad begin operand");
     let mut buf: Vec<u8> = Vec::new();
