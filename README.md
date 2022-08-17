@@ -49,7 +49,10 @@ here as an indicator that no more data will be exchanged between the "previously
 ## Debunking some myths about P2P networking
 
 - "True P2P is only possible without a NAT" - [Both my experiments and wikipedia would like to
-have a word about hole punching.](https://en.wikipedia.org/wiki/UDP_hole_punching)
+have a word about hole punching.](https://en.wikipedia.org/wiki/UDP_hole_punching) The only issue I
+have found are *some* german mobile data providers, but sending large files over mobile data is
+rarely something you'd want to do - and if so, use something like croc or the magic wormhole, which
+aren't purely true P2P.
 - "Croc is P2P as well, why does this exist?" - Croc is not Peer-to-Peer. Croc uses a relay server
 to exchange data between the two clients. This is Client-to-Server-to-Client, which is *not* really
 Peer-to-Peer. Peer-to-Peer means two clients sending their data directly to eachother, without a
