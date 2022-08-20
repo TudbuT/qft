@@ -154,13 +154,16 @@ impl SafeReadWrite {
             break;
         }
         let mut buf = [0, 0, 0];
+        let mut wait = idn == 0xffff || flush;
         if self.last_transmitted.len() < 100 {
             self.socket
                 .set_read_timeout(Some(Duration::from_millis(1)))
                 .unwrap();
         }
-        let mut wait = idn == 0xffff || flush;
-        let start = unix_millis();
+        else {
+            wait = true;
+        }
+        let mut start = unix_millis();
         if idn == 0xffff {
             print!("\r\x1b[KPacket ID needs to wrap. Waiting for partner to catch up...")
         }
@@ -220,11 +223,11 @@ impl SafeReadWrite {
                 None => {
                     if unix_millis() - start > 10000 {
                         println!("\r\x1b[K10s passed since last packet ==> Contact broke. Trying to resend packet...");
+                        let buf = self
+                            .last_transmitted
+                            .get(&idn)
+                            .expect("Unable to recover from connection loss.");
                         loop {
-                            let buf = self
-                                .last_transmitted
-                                .get(&idn)
-                                .expect("Unable to recover from connection loss.");
                             match self.socket.send(buf) {
                                 Ok(x) => {
                                     if x != buf.len() {
@@ -237,7 +240,7 @@ impl SafeReadWrite {
                             }
                             break;
                         }
-                        break;
+                        start = unix_millis();
                     }
                     if !wait {
                         break;
