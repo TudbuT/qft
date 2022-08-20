@@ -68,6 +68,8 @@ here as an indicator that no more data will be exchanged between the "previously
 - You can add a number to the end of both of your commands (after the filename) to
   boost transfer speeds (higher = faster), but a too large number might cause unreliability
   due to local network conditions or VPNs. The maximum possible is 65532 (65535 - 3).
+- You can run a helper yourself, as the "helper" mode argument suggests. This helper should simply
+  be run on a server which is reachable from all over the web (a cheap VPS will definitely do).
 - Helpers don't **have to** be run on a public server, they work in LAN too, but that way, only
   computers in the same LAN will be able to use them.
 - You can allow streaming (for example when you want to transmit from /dev/stdin) by setting
@@ -119,3 +121,29 @@ peer-to-peer.
 ## [Relevant XKCD](https://xkcd.com/949)
 
 ![Relevant XKCD Image](https://imgs.xkcd.com/comics/file_transfer.png)
+
+## FAQ
+
+#### What is a helper?
+
+As explained above, it is used to establish the connection between the two partners.
+
+#### Why is a helper needed?
+
+Your router uses a thing called **N**etwork **A**ddress **T**ranslation. It is required because
+otherwise, there would be way too many IP addresses in use and the internet would cease to work
+during busy times. This NAT is also a problem however, because it is a layer between your PC and the
+open internet. When there is a new incoming connection, the NAT won't know which PC in your LAN to
+forward the connection to, so the connection is simply rejected. Any Peer-to-Peer software therefore
+needs a helper server (also called "STUN" server) which both peers will ask for the other's IP
+address and port. Both peers can then send a bunch of outgoing connections to eachother. If
+everything goes well, both peers have sent an outgoing with the right timing, causing both NATs to
+*think* they are outgoing connections, when actually, they are a sort of combination of incoming and 
+outgoing ones.
+
+TL;DR: P2P networking is impossible without a helper server, because of Routers. Port-forwarding
+would be required otherwise, which can be hard to set up.
+
+#### How to make a public/private helper?
+
+Read the 2nd bullet point in the Tips 'n Tricks section.
