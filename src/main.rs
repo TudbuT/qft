@@ -429,6 +429,9 @@ fn holepunch(args: &Vec<String>) -> UdpSocket {
         .set_write_timeout(Some(Duration::from_secs(1)))
         .unwrap();
     if env::var("QFT_USE_TIMED_HOLEPUNCH").is_ok() {
+        println!("Warning: You are using the QFT_USE_TIMED_HOLEPUNCH environment variable. This won't allow for more \
+            backwards-compatibility, rather it only exists as a fallback for bad connections. Please make absolutely \
+            sure your partner uses QFT_USE_TIMED_HOLEPUNCH as well, data might otherwise get corrupted on the receiver.");
         println!("Waiting...");
         let mut stop = false;
         while !stop {
