@@ -88,6 +88,9 @@ source ~/.(shell)rc
 - Did you know you can hibernate or suspend your computer while it's transferring and it'll continue
   where it left of, even when only one side is suspended? (Unless your router blocked the port, read 
   the "Resume a fully stopped transfer" section in that case)
+- QFT can withstand heavy ~~weather~~ network conditions: 1000ms ping is just as fast as 10ms ping,
+  packet loss/reorder rates of over 10% are tolerated (but can slow speeds down, especially when
+  ping is high).
 - It's written in *100% pure Rust*.
 
 ## Resume a fully stopped transfer
