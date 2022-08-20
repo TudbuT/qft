@@ -82,7 +82,7 @@ impl SafeReadWrite {
                     } else if id > self.packet_count_in as u16
                         && (id - self.packet_count_in as u16) < 0xC000
                     {
-                        if !is_catching_up {
+                        if !is_catching_up && !env::var("QFT_HIDE_DROPS").is_ok() {
                             println!(
                                 "\r\x1b[KA packet dropped: {} (got) is newer than {} (expected)",
                                 &id,
@@ -185,7 +185,7 @@ impl SafeReadWrite {
                     }
                     if buf[2] == SafeReadWritePacket::ResendRequest as u8 {
                         let mut n = u16::from_be_bytes([buf[0], buf[1]]);
-                        if !is_catching_up {
+                        if !is_catching_up && !env::var("QFT_HIDE_DROPS").is_ok() {
                             println!("\r\x1b[KA packet dropped: {}", &n);
                         }
                         wait = true;
