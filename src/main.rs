@@ -1,3 +1,5 @@
+mod gui;
+
 use std::{
     collections::HashMap,
     env,
@@ -159,8 +161,7 @@ impl SafeReadWrite {
             self.socket
                 .set_read_timeout(Some(Duration::from_millis(1)))
                 .unwrap();
-        }
-        else {
+        } else {
             wait = true;
         }
         let mut start = unix_millis();
@@ -266,14 +267,15 @@ fn main() {
         .as_str()
     {
         "helper" => helper(&args),
-        "sender" => sender(&args),
+        "sender" => sender(&args, |_| {}),
         "receiver" => receiver(&args),
+        "gui" => gui::gui().expect("can't use gui"),
         "version" => println!("QFT version: {}", env!("CARGO_PKG_VERSION")),
         _ => print_args(&args),
     }
 }
 
-fn helper(args: &Vec<String>) {
+pub fn helper(args: &Vec<String>) {
     let bind_addr = (
         "0.0.0.0",
         u16::from_str_radix(args[2].as_str(), 10).expect("invalid port: must be integer"),
@@ -312,7 +314,7 @@ fn helper(args: &Vec<String>) {
     }
 }
 
-fn sender(args: &Vec<String>) {
+pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let connection = holepunch(args);
     let br = args
         .get(5)
@@ -341,6 +343,7 @@ fn sender(args: &Vec<String>) {
 
     let mut sc = SafeReadWrite::new(connection);
     let mut bytes_sent: u64 = 0;
+    let mut last_update = unix_millis();
     loop {
         let read = file.read(&mut buf).expect("file read error");
         if read == 0 && !env::var("QFT_STREAM").is_ok() {
@@ -356,10 +359,14 @@ fn sender(args: &Vec<String>) {
             print!("\r\x1b[KSent {} bytes", bytes_sent);
             stdout().flush().unwrap();
         }
+        if unix_millis() - last_update > 100 {
+            on_progress(bytes_sent as f32 / file.metadata().expect("bad metadata").len() as f32);
+            last_update = unix_millis();
+        }
     }
 }
 
-fn receiver(args: &Vec<String>) {
+pub fn receiver(args: &Vec<String>) {
     let connection = holepunch(args);
     let br = args
         .get(5)
@@ -506,13 +513,14 @@ fn print_args(args: &Vec<String>) {
          | {} helper <bind-port>\n\
          | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
          | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
+         | {} gui\n\
          | {} version\n",
-        f, f, f, f
+        f, f, f, f, f
     );
     panic!("No arguments");
 }
 
-fn unix_millis() -> u64 {
+pub fn unix_millis() -> u64 {
     SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
