@@ -258,7 +258,7 @@ impl SafeReadWrite {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() <= 1 {
+    if args.len() == 0 {
         print_args(&args);
     }
     match args
@@ -271,7 +271,10 @@ fn main() {
         "receiver" => receiver(&args, |_| {}),
         "gui" => gui::gui().expect("can't use gui"),
         "version" => println!("QFT version: {}", env!("CARGO_PKG_VERSION")),
-        _ => print_args(&args),
+        _ => match gui::gui() {
+            Ok(_) => {},
+            Err(_) => print_args(&args),
+        },
     }
 }
 
