@@ -271,7 +271,10 @@ fn main() {
         "receiver" => receiver(&args, |_| {}),
         "gui" => gui::gui().expect("can't use gui"),
         "version" => println!("QFT version: {}", env!("CARGO_PKG_VERSION")),
-        _ => print_args(&args),
+        _ => match gui::gui() {
+            Ok(_) => {},
+            Err(_) => print_args(&args),
+        },
     }
 }
 
