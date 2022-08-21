@@ -158,7 +158,7 @@ impl SafeReadWrite {
         }
         let mut buf = [0, 0, 0];
         let mut wait = idn == 0xffff || flush;
-        if self.last_transmitted.len() < 100 {
+        if self.last_transmitted.len() < 256 {
             self.socket
                 .set_read_timeout(Some(Duration::from_millis(1)))
                 .unwrap();
