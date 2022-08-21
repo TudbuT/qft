@@ -1,7 +1,6 @@
 # qft
 
-QFT is a small command line application for Quick (and really reliable) Peer-To-Peer UDP file
-transfer. 
+QFT is a small application for Quick (and really reliable) Peer-To-Peer UDP file transfer. 
 
 ## If a friend sent you here...
 
@@ -15,6 +14,13 @@ friend's instructions on how to receive the file they wanted to send you.
 - On the sender PC, enter `qft sender <helper> <shared-phrase> <filename>`.
 - On the receiver PC, enter `qft receiver <helper> <shared-phrase> <filename>`.
 - Both PCs should start transferring after a short while. If they don't, try again.
+
+OR
+- On both PCs, enter `qft gui`.
+- Select mode
+- Select file to send and file to save to
+- Update the shared phrases to match
+- Click start
 
 ### Arguments:
 ```
