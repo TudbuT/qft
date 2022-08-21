@@ -187,23 +187,40 @@ pub fn gui() -> Result<(), iui::UIError> {
         args.push(a);
         let a = skipb.get().value(uib.get());
         args.push(a);
-        println!("{:?}", args);
         match modeb.get().selected(uib.get()) {
             0 => {
                 barb.get()
                     .set_value(uib.get(), ProgressBarValue::Indeterminate);
-                let uib1 = Ref::new(uib.get());
-                let barb1 = RefMut::new(barb.get());
+                let uib = uib.clone();
+                let barb = barb.clone();
 
                 thread::spawn(move || {
-                    crate::receiver(&args);
-                    let uib = uib1.clone();
-                    let barb = barb1.clone();
-                    uib1.get().queue_main(move || {
-                        barb
+                    let mut last_percentage = 0;
+                    let lpb = RefMut::new(&mut last_percentage);
+                    let uib1 = uib.clone();
+                    let barb1 = barb.clone();
+                    crate::receiver(&args, move |f| {
+                        let lpb1 = lpb.clone();
+                        let uib = uib1.clone();
+                        let barb = barb1.clone();
+                        uib1.get().queue_main(move || {
+                            let percentage = (f * 100 as f32) as u32;
+                            if percentage != *lpb1.get() {
+                                barb.get().set_value(
+                                    uib.get(),
+                                    ProgressBarValue::Determinate(percentage),
+                                );
+                                *lpb1.get() = percentage;
+                            }
+                        })
+                    });
+                    let uib1 = uib.clone();
+                    let barb1 = barb.clone();
+                    uib.get().queue_main(move || {
+                        barb1
                             .get()
-                            .set_value(uib.get(), ProgressBarValue::Determinate(100));
-                        bb.get().enable(uib.get());
+                            .set_value(uib1.get(), ProgressBarValue::Determinate(100));
+                        bb.get().enable(uib1.get());
                     });
                 });
             }
@@ -225,7 +242,10 @@ pub fn gui() -> Result<(), iui::UIError> {
                         uib1.get().queue_main(move || {
                             let percentage = (f * 100 as f32) as u32;
                             if percentage != *lpb1.get() {
-                                barb.get().set_value(uib.get(), ProgressBarValue::Determinate(percentage));
+                                barb.get().set_value(
+                                    uib.get(),
+                                    ProgressBarValue::Determinate(percentage),
+                                );
                                 *lpb1.get() = percentage;
                             }
                         })
@@ -242,7 +262,6 @@ pub fn gui() -> Result<(), iui::UIError> {
             }
             _ => panic!("invalid mode"),
         }
-        println!("Running.");
     });
     vbox.append(
         &ui,

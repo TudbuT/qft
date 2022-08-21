@@ -268,7 +268,7 @@ fn main() {
     {
         "helper" => helper(&args),
         "sender" => sender(&args, |_| {}),
-        "receiver" => receiver(&args),
+        "receiver" => receiver(&args, |_| {}),
         "gui" => gui::gui().expect("can't use gui"),
         "version" => println!("QFT version: {}", env!("CARGO_PKG_VERSION")),
         _ => print_args(&args),
@@ -344,6 +344,9 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let mut sc = SafeReadWrite::new(connection);
     let mut bytes_sent: u64 = 0;
     let mut last_update = unix_millis();
+    let len = file.metadata().expect("bad metadata").len();
+    sc.write_safe(&len.to_be_bytes()).expect("unable to send file length");
+    println!("Length: {}", &len);
     loop {
         let read = file.read(&mut buf).expect("file read error");
         if read == 0 && !env::var("QFT_STREAM").is_ok() {
@@ -360,13 +363,13 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
             stdout().flush().unwrap();
         }
         if unix_millis() - last_update > 100 {
-            on_progress(bytes_sent as f32 / file.metadata().expect("bad metadata").len() as f32);
+            on_progress((bytes_sent + begin) as f32 / len as f32);
             last_update = unix_millis();
         }
     }
 }
 
-pub fn receiver(args: &Vec<String>) {
+pub fn receiver<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let connection = holepunch(args);
     let br = args
         .get(5)
@@ -399,10 +402,16 @@ pub fn receiver(args: &Vec<String>) {
 
     let mut sc = SafeReadWrite::new(connection);
     let mut bytes_received: u64 = 0;
+    let mut last_update = unix_millis();
+    let mut len_bytes = [0 as u8; 8];
+    let len = sc.read_safe(&mut len_bytes).expect("unable to read length from sender").0;
+    let len = u64::from_be_bytes([len[0], len[1], len[2], len[3], len[4], len[5], len[6], len[7]]);
+    file.set_len(len).expect("unable to set file length");
+    println!("Length: {}", &len);
     loop {
-        let (mbuf, len) = sc.read_safe(buf).expect("read error");
-        let buf = &mbuf.leak()[..len];
-        if len == 0 {
+        let (mbuf, amount) = sc.read_safe(buf).expect("read error");
+        let buf = &mbuf.leak()[..amount];
+        if amount == 0 {
             println!();
             println!("Transfer done. Thank you!");
             return;
@@ -410,10 +419,14 @@ pub fn receiver(args: &Vec<String>) {
 
         file.write(buf).expect("write error");
         file.flush().expect("file flush error");
-        bytes_received += len as u64;
+        bytes_received += amount as u64;
         if (bytes_received % (br * 20) as u64) < (br as u64) {
             print!("\r\x1b[KReceived {} bytes", bytes_received);
             stdout().flush().unwrap();
+        }
+        if unix_millis() - last_update > 100 {
+            on_progress((bytes_received + begin) as f32 / len as f32);
+            last_update = unix_millis();
         }
     }
 }
