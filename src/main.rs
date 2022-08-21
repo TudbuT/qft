@@ -41,7 +41,7 @@ impl SafeReadWrite {
     }
 
     pub fn write_flush_safe(&mut self, buf: &[u8], flush: bool) -> Result<(), Error> {
-        self.internal_write_safe(buf, SafeReadWritePacket::Write, flush)
+        self.internal_write_safe(buf, SafeReadWritePacket::Write, flush, false)
     }
 
     pub fn read_safe(&mut self, buf: &[u8]) -> Result<(Vec<u8>, usize), Error> {
@@ -113,7 +113,7 @@ impl SafeReadWrite {
     }
 
     pub fn end(mut self) -> UdpSocket {
-        let _ = self.internal_write_safe(&mut [], SafeReadWritePacket::End, true);
+        let _ = self.internal_write_safe(&mut [], SafeReadWritePacket::End, true, true);
 
         self.socket
     }
@@ -123,6 +123,7 @@ impl SafeReadWrite {
         buf: &[u8],
         packet: SafeReadWritePacket,
         flush: bool,
+        exit_on_lost: bool,
     ) -> Result<(), Error> {
         if buf.len() > 0xfffc {
             panic!(
@@ -195,25 +196,23 @@ impl SafeReadWrite {
                         wait = true;
                         is_catching_up = true;
                         while n <= idn && !(idn == 0xffff && n == 0) {
-                            let buf = self.last_transmitted.get(&n).expect(
-                                format!(
-                                    "tried to ResendRequest an Ack'd packet with ID {}. Current ID: {}",
-                                    &n, &idn
-                                )
-                                .as_str(),
-                            );
-                            loop {
-                                // resend until success
-                                match self.socket.send(&buf.as_slice()) {
-                                    Ok(x) => {
-                                        if x != buf.len() {
+                            let buf = self.last_transmitted.get(&n);
+                            if let Some(buf) = buf {
+                                loop {
+                                    // resend until success
+                                    match self.socket.send(&buf.as_slice()) {
+                                        Ok(x) => {
+                                            if x != buf.len() {
+                                                continue;
+                                            }
+                                        }
+                                        Err(_) => {
                                             continue;
                                         }
-                                    }
-                                    Err(_) => {
-                                        continue;
-                                    }
-                                };
+                                    };
+                                    break;
+                                }
+                            } else {
                                 break;
                             }
                             // do NOT remove from last_transmitted yet, wait for Ack to do that.
@@ -222,6 +221,9 @@ impl SafeReadWrite {
                     }
                 }
                 None => {
+                    if unix_millis() - start > 5000 && exit_on_lost {
+                        break;
+                    }
                     if unix_millis() - start > 10000 {
                         println!("\r\x1b[K10s passed since last packet ==> Contact broke. Trying to resend packet...");
                         let buf = self
