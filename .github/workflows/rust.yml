@@ -17,7 +17,7 @@ jobs:
     - name: Build
       run: cargo build --verbose --release
     - name: Publish
-      uses: skx/github-actions-publish-binaries@master
+      uses: skx/github-action-publish-binaries@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -33,7 +33,7 @@ jobs:
     - name: Build
       run: mv target/release/qft target/release/qft-mac
     - name: Publish
-      uses: skx/github-actions-publish-binaries@master
+      uses: skx/github-action-publish-binaries@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -47,7 +47,7 @@ jobs:
     - name: Build
       run: cargo build --verbose --release
     - name: Publish
-      uses: skx/github-actions-publish-binaries@master
+      uses: skx/github-action-publish-binaries@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
