@@ -14,14 +14,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install gtk3
+      run: yes | apt install gtk+-3.0
     - name: Build
       run: cargo build --verbose --release
-    - name: Publish
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        args: 'target/release/qft'
+    - name: Send
+      run: ./target/release/qft sender tudbut.de:4277 send-qft target/release/qft
 
   build-mac:
     runs-on: macos-11
@@ -30,14 +28,10 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose --release
-    - name: Build
+    - name: Move file
       run: mv target/release/qft target/release/qft-mac
-    - name: Publish
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        args: 'target/release/qft-mac'
+    - name: Send
+      run: ./target/release/qft-mac sender tudbut.de:4277 send-qft-mac target/release/qft-mac
 
   build-win:
     runs-on: windows-latest
@@ -46,9 +40,5 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose --release
-    - name: Publish
-      uses: skx/github-action-publish-binaries@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        args: 'target/release/qft.exe'
+    - name: Send
+      run: ./target/release/qft.exe sender tudbut.de:4277 send-qft-exe target/release/qft.exe
