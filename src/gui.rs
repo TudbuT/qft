@@ -195,7 +195,7 @@ pub fn gui() -> Result<(), iui::UIError> {
                 let barb = barb.clone();
 
                 thread::spawn(move || {
-                    let mut last_percentage = 0;
+                    let mut last_percentage = -1;
                     let lpb = RefMut::new(&mut last_percentage);
                     let uib1 = uib.clone();
                     let barb1 = barb.clone();
@@ -231,7 +231,7 @@ pub fn gui() -> Result<(), iui::UIError> {
                 let barb = barb.clone();
 
                 thread::spawn(move || {
-                    let mut last_percentage = 0;
+                    let mut last_percentage = -1;
                     let lpb = RefMut::new(&mut last_percentage);
                     let uib1 = uib.clone();
                     let barb1 = barb.clone();
