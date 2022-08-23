@@ -226,24 +226,24 @@ impl SafeReadWrite {
                     }
                     if unix_millis() - start > 10000 {
                         println!("\r\x1b[K10s passed since last packet ==> Contact broke. Trying to resend packet...");
-                        let buf = self
-                            .last_transmitted
-                            .get(&idn)
-                            .expect("Unable to recover from connection loss.");
-                        loop {
-                            match self.socket.send(buf) {
-                                Ok(x) => {
-                                    if x != buf.len() {
+                        if let Some(buf) = self.last_transmitted.get(&idn) {
+                            loop {
+                                match self.socket.send(buf) {
+                                    Ok(x) => {
+                                        if x != buf.len() {
+                                            continue;
+                                        }
+                                    }
+                                    Err(_) => {
                                         continue;
                                     }
                                 }
-                                Err(_) => {
-                                    continue;
-                                }
+                                break;
                             }
-                            break;
+                            start = unix_millis();
+                        } else {
+                            break; // Latest packet was already ACK'd ==> No packets properly lost ==> Can continue with next packet.
                         }
-                        start = unix_millis();
                     }
                     if !wait {
                         break;

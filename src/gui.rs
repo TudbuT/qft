@@ -204,11 +204,11 @@ pub fn gui() -> Result<(), iui::UIError> {
                         let uib = uib1.clone();
                         let barb = barb1.clone();
                         uib1.get().queue_main(move || {
-                            let percentage = (f * 100 as f32) as u32;
+                            let percentage = (f * 100 as f32) as i32;
                             if percentage != *lpb1.get() {
                                 barb.get().set_value(
                                     uib.get(),
-                                    ProgressBarValue::Determinate(percentage),
+                                    ProgressBarValue::Determinate(percentage as u32),
                                 );
                                 *lpb1.get() = percentage;
                             }
@@ -240,11 +240,11 @@ pub fn gui() -> Result<(), iui::UIError> {
                         let uib = uib1.clone();
                         let barb = barb1.clone();
                         uib1.get().queue_main(move || {
-                            let percentage = (f * 100 as f32) as u32;
+                            let percentage = (f * 100 as f32) as i32;
                             if percentage != *lpb1.get() {
                                 barb.get().set_value(
                                     uib.get(),
-                                    ProgressBarValue::Determinate(percentage),
+                                    ProgressBarValue::Determinate(percentage as u32),
                                 );
                                 *lpb1.get() = percentage;
                             }
