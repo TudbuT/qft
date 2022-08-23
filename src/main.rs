@@ -76,7 +76,7 @@ impl SafeReadWrite {
                     }
                     if id == self.packet_count_in as u16 {
                         if id == 0xffff {
-                            println!("\r\x1b[KPacket ID wrap successful.");
+                            println!("\nPacket ID wrap successful.");
                         }
                         try_again = false;
                         self.packet_count_in += 1;
@@ -181,7 +181,7 @@ impl SafeReadWrite {
                         self.last_transmitted.remove(&n);
                         if n == idn {
                             if idn == 0xffff {
-                                println!("\r\x1b[KPacket ID wrap successful.");
+                                println!("\nPacket ID wrap successful.");
                             }
                             wait = false;
                             self.last_transmitted.clear(); // if the latest packet is ACK'd, all
@@ -225,7 +225,7 @@ impl SafeReadWrite {
                         break;
                     }
                     if unix_millis() - start > 10000 {
-                        println!("\r\x1b[K10s passed since last packet ==> Contact broke. Trying to resend packet...");
+                        println!("\n10s passed since last packet ==> Contact broke. Trying to resend packet...");
                         if let Some(buf) = self.last_transmitted.get(&idn) {
                             loop {
                                 match self.socket.send(buf) {
