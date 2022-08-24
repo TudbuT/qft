@@ -167,7 +167,7 @@ impl SafeReadWrite {
         }
         let mut start = unix_millis();
         if idn == 0xffff {
-            print!("\r\x1b[KPacket ID needs to wrap. Waiting for partner to catch up...")
+            print!("\nPacket ID needs to wrap. Waiting for partner to catch up...")
         }
         let mut is_catching_up = false;
         loop {
@@ -181,7 +181,7 @@ impl SafeReadWrite {
                         self.last_transmitted.remove(&n);
                         if n == idn {
                             if idn == 0xffff {
-                                println!("\nPacket ID wrap successful.");
+                                println!("\r\x1b[KPacket ID wrap successful.");
                             }
                             wait = false;
                             self.last_transmitted.clear(); // if the latest packet is ACK'd, all
