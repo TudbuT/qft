@@ -6,10 +6,13 @@ use std::{
     fs::{File, OpenOptions},
     io::{stdout, Error, Read, Seek, SeekFrom, Write},
     net::*,
+    ops::Mul,
     str::FromStr,
     thread,
     time::{Duration, SystemTime},
 };
+
+use time::{Date, PrimitiveDateTime, Time};
 
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 enum SafeReadWritePacket {
@@ -24,6 +27,17 @@ struct SafeReadWrite {
     last_transmitted: HashMap<u16, Vec<u8>>,
     packet_count_out: u64,
     packet_count_in: u64,
+}
+
+struct Wrap<T>(T);
+
+impl Mul<Wrap<&str>> for u64 {
+    type Output = String;
+
+    fn mul(self, rhs: Wrap<&str>) -> Self::Output {
+        let strings: Vec<&str> = (0..self).map(|_| rhs.0).collect();
+        strings.join("")
+    }
 }
 
 impl SafeReadWrite {
@@ -265,7 +279,7 @@ fn main() {
     }
     if args.len() == 1 {
         match gui::gui() {
-            Ok(_) => {},
+            Ok(_) => (),
             Err(_) => print_args(&args),
         }
     }
@@ -291,6 +305,14 @@ pub fn helper(args: &Vec<String>) {
     let mut map: HashMap<[u8; 200], SocketAddr> = HashMap::new();
     let listener = UdpSocket::bind(&bind_addr).expect("unable to create socket");
     let mut buf = [0 as u8; 200];
+    let mut last_log_time = unix_millis();
+    let mut amount_since_log = 0;
+    let mut helper_log = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(true)
+        .open("qft_helper_log.txt")
+        .expect("unable to create helper log");
     loop {
         let (l, addr) = listener.recv_from(&mut buf).expect("read error");
         if l != 200 {
@@ -314,6 +336,27 @@ pub fn helper(args: &Vec<String>) {
             {
                 // success!
                 println!("Helped {} and {}! :D", addr, other);
+                amount_since_log += 1;
+                if unix_millis() - last_log_time > 10000 {
+                    let d = PrimitiveDateTime::new(
+                        Date::from_calendar_date(1970, time::Month::January, 1).unwrap(),
+                        Time::MIDNIGHT,
+                    ) + Duration::from_millis(unix_millis());
+                    helper_log
+                        .write(
+                            format!(
+                                "{} | {} {}>\n",
+                                d,
+                                amount_since_log,
+                                amount_since_log * Wrap("=")
+                            )
+                            .as_bytes(),
+                        )
+                        .expect("error writing to log");
+                    helper_log.flush().expect("error writing to log");
+                    last_log_time = unix_millis();
+                    amount_since_log = 0;
+                }
             }
             map.remove(&buf);
         } else {
@@ -353,7 +396,8 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let mut bytes_sent: u64 = 0;
     let mut last_update = unix_millis();
     let len = file.metadata().expect("bad metadata").len();
-    sc.write_safe(&len.to_be_bytes()).expect("unable to send file length");
+    sc.write_safe(&len.to_be_bytes())
+        .expect("unable to send file length");
     println!("Length: {}", &len);
     loop {
         let read = file.read(&mut buf).expect("file read error");
@@ -412,8 +456,13 @@ pub fn receiver<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let mut bytes_received: u64 = 0;
     let mut last_update = unix_millis();
     let mut len_bytes = [0 as u8; 8];
-    let len = sc.read_safe(&mut len_bytes).expect("unable to read length from sender").0;
-    let len = u64::from_be_bytes([len[0], len[1], len[2], len[3], len[4], len[5], len[6], len[7]]);
+    let len = sc
+        .read_safe(&mut len_bytes)
+        .expect("unable to read length from sender")
+        .0;
+    let len = u64::from_be_bytes([
+        len[0], len[1], len[2], len[3], len[4], len[5], len[6], len[7],
+    ]);
     file.set_len(len).expect("unable to set file length");
     println!("Length: {}", &len);
     loop {
