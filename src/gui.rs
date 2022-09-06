@@ -307,12 +307,6 @@ pub fn gui() -> Result<(), iui::UIError> {
     window.set_child(&ui, vbox);
     window.show(&ui);
 
-    /*si.on_should_quit(move || {
-        let quit_window = Window::new(&ui, "Really quit?", 300, 100, WindowType::NoMenubar);
-        let label = Label::new(&ui, "Do you really want to quit? Data is currently being transferred.");
-        ui.quit();
-    });*/
-
     ui.event_loop().run(&ui);
     println!("GUI done");
 
