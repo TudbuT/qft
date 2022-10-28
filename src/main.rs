@@ -400,7 +400,7 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     sc.write_safe(&len.to_be_bytes())
         .expect("unable to send file length");
     println!("Length: {}", &len);
-    let mut time_elapsed = unix_millis();
+    let mut time = unix_millis();
     loop {
         let read = file.read(&mut buf).expect("file read error");
         if read == 0 && !env::var("QFT_STREAM").is_ok() {
@@ -413,10 +413,13 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
         sc.write_safe(&buf[..read]).expect("send error");
         bytes_sent += read as u64;
         if (bytes_sent % (br * 20) as u64) < (br as u64) {
+            let elapsed = unix_millis() - time;
+            let elapsed = if elapsed == 0 { 1 } else { elapsed };
+
             print!("\r\x1b[KSent {} bytes; Speed: {} kb/s",
-               bytes_sent, br as usize * 20 / (unix_millis() - time_elapsed) as usize );
+                   bytes_sent, br as usize * 20 / elapsed as usize );
             stdout().flush().unwrap();
-            time_elapsed = unix_millis();
+            time = unix_millis();
         }
         if unix_millis() - last_update > 100 {
             on_progress((bytes_sent + begin) as f32 / len as f32);
@@ -469,7 +472,7 @@ pub fn receiver<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     ]);
     file.set_len(len).expect("unable to set file length");
     println!("Length: {}", &len);
-    let mut time_elapsed = unix_millis();
+    let mut time = unix_millis();
     loop {
         let (mbuf, amount) = sc.read_safe(buf).expect("read error");
         let buf = &mbuf.leak()[..amount];
@@ -483,10 +486,13 @@ pub fn receiver<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
         file.flush().expect("file flush error");
         bytes_received += amount as u64;
         if (bytes_received % (br * 20) as u64) < (br as u64) {
+            let elapsed = unix_millis() - time;
+            let elapsed = if elapsed == 0 { 1 } else { elapsed };
+
             print!("\r\x1b[KReceived {} bytes; Speed: {} kb/s",
-                   bytes_received, br as usize * 20 / (unix_millis() - time_elapsed) as usize );
+                   bytes_received, br as usize * 20 / elapsed as usize );
             stdout().flush().unwrap();
-            time_elapsed = unix_millis();
+            time = unix_millis();
         }
         if unix_millis() - last_update > 100 {
             on_progress((bytes_received + begin) as f32 / len as f32);
