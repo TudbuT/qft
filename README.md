@@ -6,7 +6,7 @@ QFT is a small application for Quick (and really reliable) Peer-To-Peer UDP file
 
 ...look at the "Releases" section on the sidebar. You should see a link titled vX.Y.Z. Click on
 that, and then choose the right file for your OS: `qft` for Linux, `qft-mac` for Mac, and `qft.exe`
-for Windows (currently unavailable, sorry.). Download this file, make it executable in case of Linux or Mac, and then follow your
+for Windows. Download this file, make it executable in case of Linux or Mac, and then follow your
 friend's instructions on how to receive the file they wanted to send you.
 
 ## Usage:
