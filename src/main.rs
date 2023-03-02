@@ -470,7 +470,7 @@ pub fn receiver<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let len = u64::from_be_bytes([
         len[0], len[1], len[2], len[3], len[4], len[5], len[6], len[7],
     ]);
-    file.set_len(len).expect("unable to set file length");
+    let _ = file.set_len(len);
     println!("Length: {}", &len);
     let mut time = unix_millis();
     loop {
