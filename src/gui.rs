@@ -216,8 +216,10 @@ pub fn gui() -> Result<(), iui::UIError> {
         args.push(a);
         let a = pathb.get().clone();
         args.push(a);
-        let a = delayb.get().value(uib.get()).to_string();
-        args.push(a);
+        if modeb.get().selected(uib.get()) == 1 {
+            let a = delayb.get().value(uib.get()).to_string();
+            args.push(a);
+        }
         let a = speedb.get().value(uib.get()).to_string();
         args.push(a);
         let a = skipb.get().value(uib.get());
