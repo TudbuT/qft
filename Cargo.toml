@@ -1,11 +1,14 @@
 [package]
 name = "qft"
-version = "0.5.5"
+version = "0.5.6"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-iui.git = "https://github.com/rust-native-ui/libui-rs"
-rand = "0"
-time = "0"
+iui = { git = "https://github.com/rust-native-ui/libui-rs", optional = true }
+rand = { version = "0.8", optional = true }
+time = "0.3"
+
+[features]
+gui = [ "dep:iui", "dep:rand" ]

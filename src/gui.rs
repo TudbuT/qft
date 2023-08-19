@@ -117,7 +117,7 @@ pub fn gui() -> Result<(), iui::UIError> {
     );
 
     let mut speed = VerticalBox::new(&ui);
-    let mut speed_slider = Slider::new(&ui, 100, 10_000);
+    let mut speed_slider = Slider::new(&ui, 100, 3_000);
     let speedb = Ref::new(&speed_slider);
     let mut speed_box = Entry::new(&ui);
     speed_slider.set_value(&ui, 256);

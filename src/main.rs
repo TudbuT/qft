@@ -1,3 +1,4 @@
+#[cfg(feature = "gui")]
 mod gui;
 
 use std::{
@@ -168,6 +169,7 @@ impl SafeReadWrite {
                     continue;
                 }
             }
+            thread::sleep(Duration::from_micros(1200));
             self.last_transmitted.insert(idn, vbuf);
             break;
         }
@@ -186,7 +188,17 @@ impl SafeReadWrite {
         }
         let mut is_catching_up = false;
         loop {
-            match self.socket.recv(&mut buf).ok() {
+            match (
+                if !wait {
+                    self.socket.set_nonblocking(true).unwrap()
+                } else {
+                    ()
+                },
+                self.socket.recv(&mut buf).ok(),
+                self.socket.set_nonblocking(false).unwrap(),
+            )
+                .1
+            {
                 Some(x) => {
                     if x != 3 {
                         continue;
@@ -205,33 +217,38 @@ impl SafeReadWrite {
                     }
                     if buf[2] == ResendRequest as u8 {
                         let mut n = u16::from_be_bytes([buf[0], buf[1]]);
+                        thread::sleep(Duration::from_millis(100));
+                        while let Some(_) = self.socket.recv(&mut buf).ok() {}
                         if !is_catching_up && !env::var("QFT_HIDE_DROPS").is_ok() {
                             println!("\r\x1b[KA packet dropped: {}", &n);
                         }
-                        wait = true;
-                        is_catching_up = true;
-                        while n <= idn && !(idn == 0xffff && n == 0) {
-                            let buf = self.last_transmitted.get(&n);
-                            if let Some(buf) = buf {
-                                loop {
-                                    // resend until success
-                                    match self.socket.send(&buf.as_slice()) {
-                                        Ok(x) => {
-                                            if x != buf.len() {
+                        if !is_catching_up {
+                            wait = true;
+                            is_catching_up = true;
+                            while n <= idn && !(idn == 0xffff && n == 0) {
+                                let buf = self.last_transmitted.get(&n);
+                                if let Some(buf) = buf {
+                                    loop {
+                                        // resend until success
+                                        match self.socket.send(&buf.as_slice()) {
+                                            Ok(x) => {
+                                                if x != buf.len() {
+                                                    continue;
+                                                }
+                                            }
+                                            Err(_) => {
                                                 continue;
                                             }
-                                        }
-                                        Err(_) => {
-                                            continue;
-                                        }
-                                    };
+                                        };
+                                        thread::sleep(Duration::from_millis(4));
+                                        break;
+                                    }
+                                } else {
                                     break;
                                 }
-                            } else {
-                                break;
+                                // do NOT remove from last_transmitted yet, wait for Ack to do that.
+                                n += 1;
                             }
-                            // do NOT remove from last_transmitted yet, wait for Ack to do that.
-                            n += 1;
                         }
                     }
                 }
@@ -253,6 +270,7 @@ impl SafeReadWrite {
                                         continue;
                                     }
                                 }
+                                thread::sleep(Duration::from_millis(4));
                                 break;
                             }
                             start = unix_millis();
@@ -279,10 +297,13 @@ fn main() {
         panic!("no args");
     }
     if args.len() == 1 {
+        #[cfg(feature = "gui")]
         match gui::gui() {
             Ok(_) => (),
             Err(_) => print_args(&args),
         }
+        #[cfg(not(feature = "gui"))]
+        print_args(&args)
     }
     match args
         .get(1)
@@ -292,7 +313,10 @@ fn main() {
         "helper" => helper(&args),
         "sender" => sender(&args, |_| {}),
         "receiver" => receiver(&args, |_| {}),
+        #[cfg(feature = "gui")]
         "gui" => gui::gui().expect("can't use gui"),
+        #[cfg(not(feature = "gui"))]
+        "gui" => println!("Feature 'gui' was not enabled during compilation. GUI not available."),
         "version" => println!("QFT version: {}", env!("CARGO_PKG_VERSION")),
         _ => print_args(&args),
     }
@@ -416,8 +440,11 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
             let elapsed = unix_millis() - time;
             let elapsed = if elapsed == 0 { 1 } else { elapsed };
 
-            print!("\r\x1b[KSent {} bytes; Speed: {} kb/s",
-                   bytes_sent, br as usize * 20 / elapsed as usize );
+            print!(
+                "\r\x1b[KSent {} bytes; Speed: {} kb/s",
+                bytes_sent,
+                br as usize * 20 / elapsed as usize
+            );
             stdout().flush().unwrap();
             time = unix_millis();
         }
@@ -489,8 +516,11 @@ pub fn receiver<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
             let elapsed = unix_millis() - time;
             let elapsed = if elapsed == 0 { 1 } else { elapsed };
 
-            print!("\r\x1b[KReceived {} bytes; Speed: {} kb/s",
-                   bytes_received, br as usize * 20 / elapsed as usize );
+            print!(
+                "\r\x1b[KReceived {} bytes; Speed: {} kb/s",
+                bytes_received,
+                br as usize * 20 / elapsed as usize
+            );
             stdout().flush().unwrap();
             time = unix_millis();
         }
