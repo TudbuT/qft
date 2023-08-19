@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-iui = { git = "https://github.com/rust-native-ui/libui-rs", optional = true }
+iui = { git = "https://github.com/rust-native-ui/libui-rs", optional = true, version = "0.3" }
 rand = { version = "0.8", optional = true }
 time = "0.3"
 
