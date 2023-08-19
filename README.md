@@ -19,13 +19,13 @@ OR
 - On both PCs, enter `qft gui`.
 - Select mode
 - Select file to send and file to save to
-- Update the shared phrases to match
+- Update the shared phrases and bitrate to match
 - Click start
 
 ### Arguments:
 ```
 qft helper   <bind-port>
-qft sender   <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
+qft sender   <helper-address>:<helper-port> <phrase> <filename> [send-delay] [bitrate] [skip]
 qft receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]
 ```
 
@@ -72,8 +72,11 @@ here as an indicator that no more data will be exchanged between the "previously
 
 ## Tips 'n Tricks
 - You can add a number to the end of both of your commands (after the filename) to
-  boost transfer speeds (higher = faster), but a too large number might cause unreliability
-  due to local network conditions or VPNs. The maximum possible is 65532 (65535 - 3).
+  boost transfer speeds (lower = faster), but a too small number might cause unreliability
+  due to local network conditions, VPNs, etc (default is 500). This will modify the delay between
+  packets sent.
+- You can also add a number *after that*. It will modify packet size, and a higher number here has
+  similar effects as a lower one in the previous arg.
 - You can run a helper yourself, as the "helper" mode argument suggests. This helper should simply
   be run on a server which is reachable from all over the web (a cheap VPS will definitely do).
 - Helpers don't **have to** be run on a public server, they work in LAN too, but that way, only
