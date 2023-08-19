@@ -116,6 +116,39 @@ pub fn gui() -> Result<(), iui::UIError> {
         LayoutStrategy::Compact,
     );
 
+    let mut delay = VerticalBox::new(&ui);
+    let mut delay_slider = Slider::new(&ui, 100, 3_000);
+    let delayb = Ref::new(&delay_slider);
+    let mut delay_box = Entry::new(&ui);
+    delay_slider.set_value(&ui, 500);
+    delay_box.set_value(&ui, "500");
+    // We know that ui.main() will wait until the UI is dead, so these are safe.
+    let sb = RefMut::new(&mut delay_slider);
+    let bb = RefMut::new(&mut delay_box);
+    let uib = Ref::new(&ui);
+    let uib1 = uib.clone();
+    delay_box.on_changed(&ui, move |val| {
+        sb.get().set_value(
+            uib.get(),
+            u16::from_str_radix(val.as_str(), 10).unwrap_or(256) as i32,
+        );
+    });
+    delay_slider.on_changed(&ui, move |val| {
+        bb.get().set_value(uib1.get(), val.to_string().as_str());
+    });
+    delay.set_padded(&ui, true);
+    delay.append(&ui, delay_slider, LayoutStrategy::Compact);
+    delay.append(&ui, delay_box, LayoutStrategy::Compact);
+    vbox.append(
+        &ui,
+        wrap(
+            &ui,
+            "Delay in µs: (higher = more reliable, lower = faster)",
+            delay,
+        ),
+        LayoutStrategy::Compact,
+    );
+
     let mut speed = VerticalBox::new(&ui);
     let mut speed_slider = Slider::new(&ui, 100, 3_000);
     let speedb = Ref::new(&speed_slider);
@@ -182,6 +215,8 @@ pub fn gui() -> Result<(), iui::UIError> {
         let a = phraseb.get().value(uib.get());
         args.push(a);
         let a = pathb.get().clone();
+        args.push(a);
+        let a = delayb.get().value(uib.get()).to_string();
         args.push(a);
         let a = speedb.get().value(uib.get()).to_string();
         args.push(a);

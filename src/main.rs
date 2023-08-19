@@ -52,12 +52,12 @@ impl SafeReadWrite {
         }
     }
 
-    pub fn write_safe(&mut self, buf: &[u8]) -> Result<(), Error> {
-        self.write_flush_safe(buf, false)
+    pub fn write_safe(&mut self, buf: &[u8], delay: u64) -> Result<(), Error> {
+        self.write_flush_safe(buf, false, delay)
     }
 
-    pub fn write_flush_safe(&mut self, buf: &[u8], flush: bool) -> Result<(), Error> {
-        self.internal_write_safe(buf, Write, flush, false)
+    pub fn write_flush_safe(&mut self, buf: &[u8], flush: bool, delay: u64) -> Result<(), Error> {
+        self.internal_write_safe(buf, Write, flush, false, delay)
     }
 
     pub fn read_safe(&mut self, buf: &[u8]) -> Result<(Vec<u8>, usize), Error> {
@@ -129,7 +129,7 @@ impl SafeReadWrite {
     }
 
     pub fn end(mut self) -> UdpSocket {
-        let _ = self.internal_write_safe(&mut [], End, true, true);
+        let _ = self.internal_write_safe(&mut [], End, true, true, 3000);
 
         self.socket
     }
@@ -140,6 +140,7 @@ impl SafeReadWrite {
         packet: SafeReadWritePacket,
         flush: bool,
         exit_on_lost: bool,
+        delay: u64,
     ) -> Result<(), Error> {
         if buf.len() > 0xfffc {
             panic!(
@@ -169,7 +170,7 @@ impl SafeReadWrite {
                     continue;
                 }
             }
-            thread::sleep(Duration::from_micros(1200));
+            thread::sleep(Duration::from_micros(delay));
             self.last_transmitted.insert(idn, vbuf);
             break;
         }
@@ -392,13 +393,18 @@ pub fn helper(args: &Vec<String>) {
 
 pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let connection = holepunch(args);
-    let br = args
+    let dly = args
         .get(5)
+        .map(|s| u64::from_str_radix(s, 10))
+        .unwrap_or(Ok(500))
+        .expect("bad delay operand");
+    let br = args
+        .get(6)
         .map(|s| u32::from_str_radix(s, 10))
         .unwrap_or(Ok(256))
         .expect("bad bitrate argument");
     let begin = args
-        .get(6)
+        .get(7)
         .map(|s| u64::from_str_radix(s, 10))
         .unwrap_or(Ok(0))
         .expect("bad begin operand");
@@ -421,7 +427,7 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
     let mut bytes_sent: u64 = 0;
     let mut last_update = unix_millis();
     let len = file.metadata().expect("bad metadata").len();
-    sc.write_safe(&len.to_be_bytes())
+    sc.write_safe(&len.to_be_bytes(), 3000)
         .expect("unable to send file length");
     println!("Length: {}", &len);
     let mut time = unix_millis();
@@ -434,7 +440,7 @@ pub fn sender<F: Fn(f32)>(args: &Vec<String>, on_progress: F) {
             return;
         }
 
-        sc.write_safe(&buf[..read]).expect("send error");
+        sc.write_safe(&buf[..read], dly).expect("send error");
         bytes_sent += read as u64;
         if (bytes_sent % (br * 20) as u64) < (br as u64) {
             let elapsed = unix_millis() - time;
@@ -624,7 +630,7 @@ fn print_args(args: &Vec<String>) {
     println!(
         "No arguments. Needed: \n\
          | {} helper <bind-port>\n\
-         | {} sender <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
+         | {} sender <helper-address>:<helper-port> <phrase> <filename> [send-dly] [bitrate] [skip]\n\
          | {} receiver <helper-address>:<helper-port> <phrase> <filename> [bitrate] [skip]\n\
          | {} gui\n\
          | {} version\n",
